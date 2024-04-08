@@ -2,10 +2,116 @@
 #include <SDL3/SDL_main.h>
 #include <cmath>
 
+#include "lib.hpp"
+
+#include "tmp.hpp"
+
+class Node {
+  public:
+    void update(){};
+    void render(Context& context) {
+        // context.setColor({255, 255, 0, 125});
+        // context.setTexture(nullptr);
+        // context.drawRect(visualRect());
+        // context.drawRect(m_contentRect);
+
+        context.setColor(m_color);
+        context.setTexture(m_texture);
+        context.drawRect(visualRect(), m_textureRect, m_angle);
+    };
+
+    void setZIndex(int zIndex) {
+        m_zIndex = zIndex;
+    }
+    int getZIndex() const {
+        return m_zIndex;
+    }
+
+    void setColor(Color color) {
+        m_color = color;
+    };
+    Color getColor() const {
+        return m_color;
+    }
+
+    void setTexture(Texture texture) {
+        setTexture(texture, Rect{{0, 0}, {(float)texture.width, (float)texture.height}});
+    };
+    void setTexture(Texture texture, Rect textureRect) {
+        m_texture = texture;
+        m_textureRect = textureRect;
+    };
+    Texture getTexture() const {
+        return m_texture;
+    };
+
+    void setAngle(float angleDegrees) {
+        m_angle = angleDegrees;
+    }
+    float getAngle() const {
+        return m_angle;
+    }
+
+    void setPosition(Vec2 position) {
+        m_contentRect.origin = position;
+    }
+    Vec2 getPosition() const {
+        return m_contentRect.origin;
+    }
+
+    void setSize(Size size) {
+        m_contentRect.size = size;
+    }
+    Size getSize() const {
+        return m_contentRect.size;
+    }
+
+    void setScale(Vec2 scale) {
+        m_scale = scale;
+    }
+    Vec2 getScale() const {
+        return m_scale;
+    }
+
+    void setScaleX(float scale) {
+        m_scale.x = scale;
+    }
+    float getScaleX() {
+        return m_scale.x;
+    }
+    void setScaleY(float scale) {
+        m_scale.y = scale;
+    }
+    float getScaleY() {
+        return m_scale.y;
+    }
+
+  private:
+    Rect visualRect() {
+        Size visualSize = m_contentRect.size * m_scale;
+        Vec2 center = m_contentRect.center();
+        Vec2 visualOrigin = center - (visualSize / 2.0).toVec2();
+        return {visualOrigin, visualSize};
+    }
+
+    Color m_color{Colors::WHITE};
+    Texture m_texture;
+    Rect m_textureRect;
+    Rect m_contentRect;
+    float m_angle{0};
+    Vec2 m_scale{1, 1};
+    int m_zIndex;
+};
+
 struct AppContext {
     SDL_Window* window;
     SDL_Renderer* renderer;
+    Context context;
     SDL_bool app_quit = SDL_FALSE;
+    Texture texture;
+    Texture texture2;
+    Texture texture3;
+    std::vector<Node> nodes;
 };
 
 int SDL_Fail() {
@@ -20,8 +126,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     }
 
     // create a window
-    SDL_Window* window =
-        SDL_CreateWindow("v0.0.1-a (" __TIMESTAMP__ ")", 352, 430, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow(version(), 352, 430, SDL_WINDOW_RESIZABLE);
     if (!window) {
         return SDL_Fail();
     }
@@ -45,21 +150,110 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     }
 
     // set up the application data
-    *appstate = new AppContext{
-        window,
-        renderer,
-    };
+    auto app = new AppContext{window, renderer, {renderer}, false};
+    *appstate = app;
 
     SDL_Log("Application started successfully!");
 
+    {
+        ImageInfo info{(int)gimp_image.width, (int)gimp_image.height, PixelFormat::RGBA};
+        std::span<const uint8_t> s{gimp_image.pixel_data, gimp_image.width * gimp_image.height *
+                                                              gimp_image.bytes_per_pixel};
+        PixelRef ref{s, (int)(gimp_image.width * gimp_image.bytes_per_pixel)};
+
+        app->texture = app->context.createTexture(info, ref);
+        app->texture2 = app->context.createTexture(info, ref, {SDL_SCALEMODE_LINEAR});
+    }
+    {
+        ImageInfo info{(int)tilemap.width, (int)tilemap.height, PixelFormat::RGBA};
+        std::span<const uint8_t> s{tilemap.pixel_data,
+                                   tilemap.width * tilemap.height * tilemap.bytes_per_pixel};
+        PixelRef ref{s, (int)(tilemap.width * tilemap.bytes_per_pixel)};
+
+        app->texture3 = app->context.createTexture(info, ref, {});
+    }
     return 0;
 }
+
+float angle = 0;
+bool flipX = false;
+bool flipY = false;
+
+bool lshift = false;
+bool lctrl = false;
 
 int SDL_AppEvent(void* appstate, const SDL_Event* event) {
     auto* app = (AppContext*)appstate;
 
-    if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-        app->app_quit = SDL_TRUE;
+    if (event->type == SDL_EVENT_KEY_DOWN) {
+        auto sc = event->key.keysym.scancode;
+        if (sc == SDL_SCANCODE_LSHIFT) {
+            lshift = true;
+        } else if (sc == SDL_SCANCODE_LGUI) {
+            lctrl = true;
+        }
+
+    } else if (event->type == SDL_EVENT_KEY_UP) {
+        auto sc = event->key.keysym.scancode;
+        if (sc == SDL_SCANCODE_LSHIFT) {
+            lshift = false;
+        } else if (sc == SDL_SCANCODE_LGUI) {
+            lctrl = false;
+        } else if (sc == SDL_SCANCODE_ESCAPE) {
+            app->app_quit = SDL_TRUE;
+        } else if (sc == SDL_SCANCODE_D) {
+            app->context.deleteTexture(app->texture);
+        } else if (sc == SDL_SCANCODE_1) {
+            flipX = !flipX;
+        } else if (sc == SDL_SCANCODE_2) {
+            flipY = !flipY;
+        } else if (sc == SDL_SCANCODE_3) {
+            angle -= 10;
+        } else if (sc == SDL_SCANCODE_4) {
+            angle += 10;
+        } else if (sc == SDL_SCANCODE_RETURN) {
+            Node node;
+            node.setColor(Colors::WHITE);
+            node.setPosition({10, 10});
+            node.setSize({100, 100});
+            int i = math::random(0.0f, 10.0f);
+            node.setTexture(app->texture3, {{32.0f * i + i, 32}, {32, 32}});
+            app->nodes.push_back(node);
+        }
+        if (app->nodes.size() > 0) {
+            auto& node = app->nodes.back();
+            if (lshift) {
+                float s = 0.1f;
+                if (sc == SDL_SCANCODE_LEFT) {
+                    node.setScale(node.getScale() - Vec2{s, 0});
+                } else if (sc == SDL_SCANCODE_RIGHT) {
+                    node.setScale(node.getScale() + Vec2{s, 0});
+                } else if (sc == SDL_SCANCODE_UP) {
+                    node.setScale(node.getScale() + Vec2{0, s});
+                } else if (sc == SDL_SCANCODE_DOWN) {
+                    node.setScale(node.getScale() - Vec2{0, s});
+                }
+            } else if (lctrl) {
+                float s = 0.1f;
+                if (sc == SDL_SCANCODE_LEFT) {
+                    node.setAngle(node.getAngle() - 10);
+                } else if (sc == SDL_SCANCODE_RIGHT) {
+                    node.setAngle(node.getAngle() + 10);
+                } else if (sc == SDL_SCANCODE_UP) {
+                } else if (sc == SDL_SCANCODE_DOWN) {
+                }
+            } else {
+                if (sc == SDL_SCANCODE_LEFT) {
+                    node.setPosition(node.getPosition() - Vec2{10, 0});
+                } else if (sc == SDL_SCANCODE_RIGHT) {
+                    node.setPosition(node.getPosition() + Vec2{10, 0});
+                } else if (sc == SDL_SCANCODE_UP) {
+                    node.setPosition(node.getPosition() - Vec2{0, 10});
+                } else if (sc == SDL_SCANCODE_DOWN) {
+                    node.setPosition(node.getPosition() + Vec2{0, 10});
+                }
+            }
+        }
     }
     if (event->type == SDL_EVENT_QUIT) {
         app->app_quit = SDL_TRUE;
@@ -68,18 +262,66 @@ int SDL_AppEvent(void* appstate, const SDL_Event* event) {
     return 0;
 }
 
+uint64_t tick = 0;
 int SDL_AppIterate(void* appstate) {
     auto* app = (AppContext*)appstate;
+    auto& context = app->context;
+    auto& nodes = app->nodes;
 
+    for (auto& node : nodes) {
+        node.update();
+    };
+
+    uint64_t prevTick = tick;
+    tick = SDL_GetTicks();
+    uint64_t deltaTick = tick - prevTick;
     // draw a color
-    auto time = SDL_GetTicks() / 1000.f;
-    auto red = (std::sin(time) + 1) / 2.0 * 255;
-    auto green = (std::sin(time / 2) + 1) / 2.0 * 255;
-    auto blue = (std::sin(time) * 2 + 1) / 2.0 * 255;
+    auto time = tick / 1000.f;
+    uint8_t red = (std::sin(time) + 1) / 2.0 * 255;
+    uint8_t green = (std::sin(time / 2) + 1) / 2.0 * 255;
+    uint8_t blue = (std::sin(time) * 2 + 1) / 2.0 * 255;
 
-    SDL_SetRenderDrawColor(app->renderer, red, green, blue, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(app->renderer);
-    SDL_RenderPresent(app->renderer);
+    angle += deltaTick / 10.f;
+
+    context.setColor(Colors::WHITE);
+    context.setTexture(nullptr);
+    context.clear(Colors::BLACK);
+#if 0
+    context.clear({red, green, blue});
+    context.setColor({red, 0, 0});
+    context.drawRect({{10, 10}, {10, 10}});
+    context.setColor({0, green, 0});
+    context.drawRect({20, 20, 10, 10});
+    context.setColor({0, 0, blue});
+    context.drawRect({30, 30, 10, 10});
+
+    context.setColor({255, 0, 255});
+    context.drawPoint({100, 100});
+    context.drawLine({150, 150}, {200, 200});
+
+    context.setColor({(uint8_t)(255 - red), (uint8_t)(255 - green), (uint8_t)(255 - blue)});
+    context.setTexture(app->texture);
+    context.drawRect({{100, 0}, {40, 80}});
+    context.setTexture(app->texture2);
+    context.drawRect({{200, 0}, {80, 40}});
+
+    context.setTexture(app->texture3);
+    context.drawRect({{0, 0}, {(float)app->texture3.width, (float)app->texture3.height}});
+
+    Size size{32, 32};
+    Size size2{32 * 2, 32 * 2};
+
+    context.setColor(Colors::WHITE);
+    context.drawRect({{0, 200}, size2}, {{0, 0}, size}, angle, flipX, flipY);
+
+    context.setColor(Colors::WHITE);
+    context.setTexture(nullptr);
+#endif
+    for (auto& node : nodes) {
+        node.render(context);
+    };
+
+    context.present();
 
     return app->app_quit;
 }
