@@ -5,11 +5,11 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
 
-# prevent installing to system directories. 
+# prevent installing to system directories.
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE INTERNAL "")
 
 # Declare the project
-project(sdl-min)
+project(Q14)
 
 # Set the name of the executable
 set(EXECUTABLE_NAME ${PROJECT_NAME})
@@ -23,9 +23,15 @@ else()
 	add_executable(${EXECUTABLE_NAME})
 endif()
 
-target_sources(${EXECUTABLE_NAME} 
-PRIVATE 
-    src/main.cpp
+file(GLOB_RECURSE SRC_FILES
+     "src/**.hpp"
+     "src/**.cpp"
+)
+
+
+target_sources(${EXECUTABLE_NAME}
+PRIVATE
+    ${SRC_FILES}
     src/iosLaunchScreen.storyboard
     src/Sample.appxManifest
 )
@@ -34,11 +40,11 @@ PRIVATE
 # should show the user while the application is starting up. If you don't include one,
 # then you get placed in a compatibility mode that does not allow HighDPI.
 # This file is referenced inside Info.plist.in, where it is marked as the launch screen file.
-# It is also ignored on non-Apple platforms. 
+# It is also ignored on non-Apple platforms.
 
 # What is Sample.appxManifest? This file describes deployment settings for Universal Windows Platform
-# applications, like splash screen and icon resolutions, which are required for the application to run. 
-# It is ignored on other platforms. Below, we add those images. 
+# applications, like splash screen and icon resolutions, which are required for the application to run.
+# It is ignored on other platforms. Below, we add those images.
 if (WINDOWS_STORE)
     target_sources("${EXECUTABLE_NAME}" PRIVATE "src/logo44.png" "src/logo150.png" "src/logo50.png" "src/logo620x300.png")
 elseif(APPLE)
@@ -62,16 +68,16 @@ endif()
 # pollute upwards into our configuration.
 add_subdirectory(SDL EXCLUDE_FROM_ALL)
 
-# Link SDL to our executable. This also makes its include directory available to us. 
+# Link SDL to our executable. This also makes its include directory available to us.
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC SDL3::SDL3)
 target_compile_definitions(${EXECUTABLE_NAME} PUBLIC SDL_MAIN_USE_CALLBACKS)
 
 # set some extra configs for each platform
-set_target_properties(${EXECUTABLE_NAME} PROPERTIES 
+set_target_properties(${EXECUTABLE_NAME} PROPERTIES
     # On macOS, make a proper .app bundle instead of a bare executable
     MACOSX_BUNDLE TRUE
     # Set the Info.plist file for Apple Mobile platforms. Without this file, your app
-    # will not launch. 
+    # will not launch.
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/src/Info.plist.in"
 
     # in Xcode, create a Scheme in the schemes dropdown for the app.
@@ -85,13 +91,13 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
 # on Visual Studio, set our app as the default project
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "${EXECUTABLE_NAME}")
 
-# On Apple Platforms, ensure that 
+# On Apple Platforms, ensure that
 # the bundle is valid for distribution.
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-INSTALL(CODE 
+INSTALL(CODE
     "include(BundleUtilities)
     fixup_bundle(\"${CMAKE_INSTALL_PREFIX}/$<CONFIGURATION>/${EXECUTABLE_NAME}.app\" \"\" \"\")
-    " 
+    "
     COMPONENT Runtime
 )
 endif()
