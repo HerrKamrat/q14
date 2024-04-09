@@ -153,4 +153,15 @@ inline float min(float a, float b) {
 float random();
 
 float random(float min, float max);
+
 }  // namespace math
+
+#include <algorithm>
+template <class T>
+typename T::value_type& randomElement(T& obj) {
+    auto b = std::begin(obj);
+    auto e = std::end(obj);
+    auto d = std::distance(b, e);
+    auto i = (int)(math::random() * d);
+    return obj[i];
+}

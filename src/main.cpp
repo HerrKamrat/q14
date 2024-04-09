@@ -7,15 +7,6 @@
 
 #include "tmp.hpp"
 
-template <class T>
-T& randomElement(std::vector<T>& obj) {
-    auto b = std::begin(obj);
-    auto e = std::end(obj);
-    auto d = std::distance(b, e);
-    auto i = (int)(math::random() * d);
-    return obj[i];
-}
-
 void addNode(World& world, TextureRect textureRect) {
     auto node = std::make_unique<Node>();
     node->setColor(Colors::WHITE);
