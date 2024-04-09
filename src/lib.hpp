@@ -1,5 +1,6 @@
-#include "lib/gfx.hpp"
+#pragma once
 
-constexpr char* version() {
-    return "v0.0.1-a (" __TIMESTAMP__ ")";
-};
+#include "lib/gfx.hpp"
+#include "lib/node.hpp"
+
+char* version();

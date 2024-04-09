@@ -2,6 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include <cmath>
 
+#include "game.hpp"
 #include "lib.hpp"
 
 #include "tmp.hpp"
@@ -14,150 +15,6 @@ T& randomElement(std::vector<T>& obj) {
     auto i = (int)(math::random() * d);
     return obj[i];
 }
-
-class Node;
-
-class UpdateContext {};
-
-class Node {
-  public:
-    void initWithTextureRect(TextureRect textureRect) {
-        setTextureRect(textureRect);
-        setSize(textureRect.bounds.size);
-    }
-
-    void update(UpdateContext& context){};
-    void render(Context& context) {
-        // context.setColor({255, 255, 0, 125});
-        // context.setTexture(nullptr);
-        // context.drawRect(visualRect());
-        // context.drawRect(m_contentRect);
-
-        context.setColor(m_color);
-        context.setTexture(getTexture());
-        context.drawTexture(visualRect(), m_textureRect.bounds, m_angle);
-        context.setColor({125, 255, 0});
-        context.drawRect(m_contentRect, true);
-        context.setColor({0, 125, 255});
-        context.drawRect(visualRect(), true);
-    };
-
-    void setZIndex(int zIndex) {
-        m_zIndex = zIndex;
-    }
-    int getZIndex() const {
-        return m_zIndex;
-    }
-
-    void setColor(Color color) {
-        m_color = color;
-    };
-    Color getColor() const {
-        return m_color;
-    }
-
-    void setTexture(Texture texture) {
-        setTexture(texture, Rect{{0, 0}, {(float)texture.width, (float)texture.height}});
-    };
-    void setTexture(Texture texture, Rect textureRect) {
-        setTextureRect({texture, textureRect});
-    };
-    Texture getTexture() const {
-        return m_textureRect.texture;
-    };
-    void setTextureRect(TextureRect textureRect) {
-        m_textureRect = textureRect;
-    };
-    TextureRect getTextureRect() const {
-        return m_textureRect;
-    };
-    void setAngle(float angleDegrees) {
-        m_angle = angleDegrees;
-    }
-    float getAngle() const {
-        return m_angle;
-    }
-
-    void setPosition(Vec2 position) {
-        m_contentRect.origin = position;
-    }
-    Vec2 getPosition() const {
-        return m_contentRect.origin;
-    }
-
-    void setSize(Size size) {
-        m_contentRect.size = size;
-    }
-    Size getSize() const {
-        return m_contentRect.size;
-    }
-
-    void setScale(Vec2 scale) {
-        m_scale = scale;
-    }
-    Vec2 getScale() const {
-        return m_scale;
-    }
-
-    void setScaleX(float scale) {
-        m_scale.x = scale;
-    }
-    float getScaleX() {
-        return m_scale.x;
-    }
-    void setScaleY(float scale) {
-        m_scale.y = scale;
-    }
-    float getScaleY() {
-        return m_scale.y;
-    }
-
-  protected:
-  private:
-    Rect visualRect() {
-        Size visualSize = m_contentRect.size * m_scale;
-        Vec2 center = m_contentRect.center();
-        Vec2 visualOrigin = center - (visualSize / 2.0).toVec2();
-        return {visualOrigin, visualSize};
-    }
-
-    Color m_color{Colors::WHITE};
-    TextureRect m_textureRect;
-    Rect m_contentRect;
-    float m_angle{0};
-    Vec2 m_scale{1, 1};
-    int m_zIndex;
-};
-class World {
-  public:
-    void update(UpdateContext& context) {
-        for (auto& node : m_nodes) {
-            node->update(context);
-        }
-    };
-
-    void render(Context& context) {
-        for (auto& node : m_nodes) {
-            node->render(context);
-        }
-    }
-
-    void addNode(std::unique_ptr<Node> node) {
-        m_nodes.push_back(std::move(node));
-    }
-
-    size_t size() {
-        return m_nodes.size();
-    }
-
-    Node* nodeAt(int index) {
-        // TODO: remove this...
-        return m_nodes.at(index).get();
-    }
-
-  private:
-    std::vector<std::unique_ptr<Node>> m_nodes;
-};
 
 void addNode(World& world, TextureRect textureRect) {
     auto node = std::make_unique<Node>();
@@ -173,7 +30,10 @@ void addNode(World& world, TextureRect textureRect) {
 struct AppContext {
     SDL_Window* window;
     SDL_Renderer* renderer;
+
+    UpdateContext updateContext;
     Context context;
+
     SDL_bool app_quit = SDL_FALSE;
     Texture texture;
     Texture texture2;
@@ -195,7 +55,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     }
 
     // create a window
-    SDL_Window* window = SDL_CreateWindow(version(), 352, 430, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow(version(), 640, 480, SDL_WINDOW_RESIZABLE);
     if (!window) {
         return SDL_Fail();
     }
@@ -220,8 +80,9 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
     std::srand(std::time(NULL));
     // set up the application data
-    auto app = new AppContext{window, renderer, {renderer}, false};
+    auto app = new AppContext{window, renderer, {}, {renderer}, false};
     *appstate = app;
+    app->world = createWorld(app->updateContext, app->renderer);
 
     SDL_Log("Application started successfully!");
 
@@ -330,6 +191,12 @@ int SDL_AppEvent(void* appstate, const SDL_Event* event) {
                     node.setPosition(node.getPosition() + Vec2{0, 10});
                 }
             }
+
+            if (sc == SDL_SCANCODE_Z) {
+                node.setZIndex(node.getZIndex() - 1);
+            } else if (sc == SDL_SCANCODE_X) {
+                node.setZIndex(node.getZIndex() + 1);
+            }
         }
     }
     if (event->type == SDL_EVENT_QUIT) {
@@ -361,7 +228,7 @@ int SDL_AppIterate(void* appstate) {
     context.setColor(Colors::WHITE);
     context.setTexture(nullptr);
     context.clear(Colors::BLACK);
-    context.clear({red, green, blue});
+    // context.clear({red, green, blue});
 #if 0
     context.clear({red, green, blue});
     context.setColor({red, 0, 0});
