@@ -6,9 +6,27 @@
 
 #include "tmp.hpp"
 
+template <class T>
+T& randomElement(std::vector<T>& obj) {
+    auto b = std::begin(obj);
+    auto e = std::end(obj);
+    auto d = std::distance(b, e);
+    auto i = (int)(math::random() * d);
+    return obj[i];
+}
+
+class Node;
+
+class UpdateContext {};
+
 class Node {
   public:
-    void update(){};
+    void initWithTextureRect(TextureRect textureRect) {
+        setTextureRect(textureRect);
+        setSize(textureRect.bounds.size);
+    }
+
+    void update(UpdateContext& context){};
     void render(Context& context) {
         // context.setColor({255, 255, 0, 125});
         // context.setTexture(nullptr);
@@ -16,8 +34,12 @@ class Node {
         // context.drawRect(m_contentRect);
 
         context.setColor(m_color);
-        context.setTexture(m_texture);
-        context.drawRect(visualRect(), m_textureRect, m_angle);
+        context.setTexture(getTexture());
+        context.drawTexture(visualRect(), m_textureRect.bounds, m_angle);
+        context.setColor({125, 255, 0});
+        context.drawRect(m_contentRect, true);
+        context.setColor({0, 125, 255});
+        context.drawRect(visualRect(), true);
     };
 
     void setZIndex(int zIndex) {
@@ -38,13 +60,17 @@ class Node {
         setTexture(texture, Rect{{0, 0}, {(float)texture.width, (float)texture.height}});
     };
     void setTexture(Texture texture, Rect textureRect) {
-        m_texture = texture;
-        m_textureRect = textureRect;
+        setTextureRect({texture, textureRect});
     };
     Texture getTexture() const {
-        return m_texture;
+        return m_textureRect.texture;
     };
-
+    void setTextureRect(TextureRect textureRect) {
+        m_textureRect = textureRect;
+    };
+    TextureRect getTextureRect() const {
+        return m_textureRect;
+    };
     void setAngle(float angleDegrees) {
         m_angle = angleDegrees;
     }
@@ -86,6 +112,7 @@ class Node {
         return m_scale.y;
     }
 
+  protected:
   private:
     Rect visualRect() {
         Size visualSize = m_contentRect.size * m_scale;
@@ -95,13 +122,53 @@ class Node {
     }
 
     Color m_color{Colors::WHITE};
-    Texture m_texture;
-    Rect m_textureRect;
+    TextureRect m_textureRect;
     Rect m_contentRect;
     float m_angle{0};
     Vec2 m_scale{1, 1};
     int m_zIndex;
 };
+class World {
+  public:
+    void update(UpdateContext& context) {
+        for (auto& node : m_nodes) {
+            node->update(context);
+        }
+    };
+
+    void render(Context& context) {
+        for (auto& node : m_nodes) {
+            node->render(context);
+        }
+    }
+
+    void addNode(std::unique_ptr<Node> node) {
+        m_nodes.push_back(std::move(node));
+    }
+
+    size_t size() {
+        return m_nodes.size();
+    }
+
+    Node* nodeAt(int index) {
+        // TODO: remove this...
+        return m_nodes.at(index).get();
+    }
+
+  private:
+    std::vector<std::unique_ptr<Node>> m_nodes;
+};
+
+void addNode(World& world, TextureRect textureRect) {
+    auto node = std::make_unique<Node>();
+    node->setColor(Colors::WHITE);
+    node->setPosition({math::random(0, 300), math::random(0, 300)});
+    node->setSize({math::random(10, 300), math::random(10, 300)});
+    node->setAngle(math::random(0, 360));
+    int i = math::random(0.0f, 10.0f);
+    node->setTextureRect(textureRect);
+    world.addNode(std::move(node));
+}
 
 struct AppContext {
     SDL_Window* window;
@@ -111,7 +178,9 @@ struct AppContext {
     Texture texture;
     Texture texture2;
     Texture texture3;
-    std::vector<Node> nodes;
+    std::vector<TextureRect> sprites;
+    // std::vector<Node> nodes;
+    World world;
 };
 
 int SDL_Fail() {
@@ -149,6 +218,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
         }
     }
 
+    std::srand(std::time(NULL));
     // set up the application data
     auto app = new AppContext{window, renderer, {renderer}, false};
     *appstate = app;
@@ -172,6 +242,19 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
         app->texture3 = app->context.createTexture(info, ref, {});
     }
+
+    {
+        TextureRect textureRect{app->texture3, {{0, 0}, {20, 29}}};
+        for (int i = 0; i < 15; i++) {
+            for (int j = 0; j < 4; j++) {
+                textureRect.bounds.origin.x = 6 + 33 * i;
+                textureRect.bounds.origin.y = 2 + 33 * j;
+                app->sprites.push_back(textureRect);
+            }
+        }
+    }
+
+    addNode(app->world, randomElement(app->sprites));
     return 0;
 }
 
@@ -212,16 +295,10 @@ int SDL_AppEvent(void* appstate, const SDL_Event* event) {
         } else if (sc == SDL_SCANCODE_4) {
             angle += 10;
         } else if (sc == SDL_SCANCODE_RETURN) {
-            Node node;
-            node.setColor(Colors::WHITE);
-            node.setPosition({10, 10});
-            node.setSize({100, 100});
-            int i = math::random(0.0f, 10.0f);
-            node.setTexture(app->texture3, {{32.0f * i + i, 32}, {32, 32}});
-            app->nodes.push_back(node);
+            addNode(app->world, randomElement(app->sprites));
         }
-        if (app->nodes.size() > 0) {
-            auto& node = app->nodes.back();
+        if (app->world.size() > 0) {
+            auto& node = *(app->world.nodeAt(app->world.size() - 1));
             if (lshift) {
                 float s = 0.1f;
                 if (sc == SDL_SCANCODE_LEFT) {
@@ -266,12 +343,10 @@ uint64_t tick = 0;
 int SDL_AppIterate(void* appstate) {
     auto* app = (AppContext*)appstate;
     auto& context = app->context;
-    auto& nodes = app->nodes;
+    auto& world = app->world;
 
-    for (auto& node : nodes) {
-        node.update();
-    };
-
+    UpdateContext updateContext;
+    world.update(updateContext);
     uint64_t prevTick = tick;
     tick = SDL_GetTicks();
     uint64_t deltaTick = tick - prevTick;
@@ -286,6 +361,7 @@ int SDL_AppIterate(void* appstate) {
     context.setColor(Colors::WHITE);
     context.setTexture(nullptr);
     context.clear(Colors::BLACK);
+    context.clear({red, green, blue});
 #if 0
     context.clear({red, green, blue});
     context.setColor({red, 0, 0});
@@ -317,9 +393,7 @@ int SDL_AppIterate(void* appstate) {
     context.setColor(Colors::WHITE);
     context.setTexture(nullptr);
 #endif
-    for (auto& node : nodes) {
-        node.render(context);
-    };
+    world.render(context);
 
     context.present();
 

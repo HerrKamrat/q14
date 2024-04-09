@@ -46,20 +46,32 @@ void Context::setTexture(Texture texture) {
     }
 }
 
-void Context::drawRect(Rect rect) {
+void Context::drawRect(Rect rect, bool outline) {
     SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
     auto r = reinterpret_cast<SDL_FRect*>(&rect);
-    if (m_currentTexture) {
-        SDL_RenderTexture(m_renderer, m_currentTexture.ptr, nullptr, r);
+    if (outline) {
+        SDL_RenderRects(m_renderer, r, 1);
     } else {
         SDL_RenderFillRects(m_renderer, r, 1);
     }
 }
 
-void Context::drawRect(Rect rect, Rect textureRect, float angleDegree, bool flipX, bool flipY) {
+void Context::drawTexture(Rect rect, float angleDegree, bool flipX, bool flipY) {
+    auto dst = reinterpret_cast<SDL_FRect*>(&rect);
+    drawTexture(nullptr, dst, angleDegree, flipX, flipY);
+}
+
+void Context::drawTexture(Rect rect, Rect textureRect, float angleDegree, bool flipX, bool flipY) {
     auto dst = reinterpret_cast<SDL_FRect*>(&rect);
     auto src = reinterpret_cast<SDL_FRect*>(&textureRect);
+    drawTexture(src, dst, angleDegree, flipX, flipY);
+}
 
+void Context::drawTexture(SDL_FRect* src,
+                          SDL_FRect* dst,
+                          float angleDegree,
+                          bool flipX,
+                          bool flipY) {
     SDL_FlipMode flip = SDL_FLIP_NONE;
 
     if (flipX && flipY) {

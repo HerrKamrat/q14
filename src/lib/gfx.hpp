@@ -33,6 +33,11 @@ struct Texture {
     int height;
 };
 
+struct TextureRect {
+    Texture texture;
+    Rect bounds;
+};
+
 struct TextureOptions {
     SDL_ScaleMode scaleMode = SDL_SCALEMODE_NEAREST;
     SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND;
@@ -51,12 +56,13 @@ class Context {
         m_currentTexture = {};
     };
 
-    void drawRect(Rect rect);
-    void drawRect(Rect rect,
-                  Rect textureRect,
-                  float angleDegree = 0,
-                  bool flipX = false,
-                  bool flipY = false);
+    void drawRect(Rect rect, bool outline = false);
+    void drawTexture(Rect rect, float angleDegree = 0, bool flipX = false, bool flipY = false);
+    void drawTexture(Rect rect,
+                     Rect textureRect,
+                     float angleDegree = 0,
+                     bool flipX = false,
+                     bool flipY = false);
 
     void drawPoint(Vec2 point);
     void drawLine(Vec2 p0, Vec2 p1);
@@ -67,6 +73,8 @@ class Context {
     void deleteTexture(Texture texture);
 
   private:
+    void drawTexture(SDL_FRect* src, SDL_FRect* dst, float angleDegree, bool flipX, bool flipY);
+
     class TextureObject {
       public:
         Texture::Id key;
