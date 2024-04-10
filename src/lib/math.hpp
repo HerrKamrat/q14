@@ -67,7 +67,29 @@ struct Size {
 
     value_type width;
     value_type height;
+    Size& operator+=(Size const& other) {
+        width += other.width;
+        height += other.height;
+        return *this;
+    }
 
+    Size& operator-=(Size const& other) {
+        width -= other.width;
+        height -= other.height;
+        return *this;
+    }
+
+    Size operator+(const Size& other) const {
+        Size out = *this;
+        out += other;
+        return out;
+    };
+
+    Size operator-(const Size& other) const {
+        Size out = *this;
+        out -= other;
+        return out;
+    };
     Size operator*(const value_type& other) const {
         Size out = *this;
         out.width *= other;
@@ -153,4 +175,15 @@ inline float min(float a, float b) {
 float random();
 
 float random(float min, float max);
+
 }  // namespace math
+
+#include <algorithm>
+template <class T>
+typename T::value_type& randomElement(T& obj) {
+    auto b = std::begin(obj);
+    auto e = std::end(obj);
+    auto d = std::distance(b, e);
+    auto i = (int)(math::random() * d);
+    return obj[i];
+}

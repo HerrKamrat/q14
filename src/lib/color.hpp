@@ -12,4 +12,7 @@ struct Color {
 namespace Colors {
 static Color WHITE{255, 255, 255, 255};
 static Color BLACK{0, 0, 0, 255};
+static Color RED{255, 0, 0, 255};
+static Color GREEN{0, 255, 0, 255};
+static Color BLUE{0, 0, 255, 255};
 };  // namespace Colors

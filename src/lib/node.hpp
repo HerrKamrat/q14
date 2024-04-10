@@ -2,14 +2,30 @@
 
 #include "gfx.hpp"
 #if 1
-class UpdateContext {};
+class UpdateContext {
+  public:
+    void setTicks(uint64_t ticks) {
+        auto prev = m_ticks;
+        m_ticks = ticks;
+        m_ticksDelta = ticks - prev;
+    };
+
+    float getDeltaTime() {
+        return m_ticksDelta / 1000.0f;
+    }
+
+  protected:
+  private:
+    uint64_t m_ticks;
+    uint64_t m_ticksDelta;
+};
 
 class Node;
 
 class World {
   public:
     void update(UpdateContext& context);
-    void render(Context& context);
+    void render(RenderContext& context);
     void addNode(std::unique_ptr<Node> node);
 
     // TODO: remove this...
@@ -30,7 +46,7 @@ class Node {
   public:
     void initWithTextureRect(TextureRect textureRect);
     void update(UpdateContext& context);
-    void render(Context& context);
+    void render(RenderContext& context);
 
     void setZIndex(int zIndex) {
         m_zIndex = zIndex;
@@ -82,6 +98,9 @@ class Node {
         return m_contentRect.size;
     }
 
+    void setScale(float scale) {
+        setScale({scale, scale});
+    }
     void setScale(Vec2 scale) {
         m_scale = scale;
     }
