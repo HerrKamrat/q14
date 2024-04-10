@@ -67,7 +67,29 @@ struct Size {
 
     value_type width;
     value_type height;
+    Size& operator+=(Size const& other) {
+        width += other.width;
+        height += other.height;
+        return *this;
+    }
 
+    Size& operator-=(Size const& other) {
+        width -= other.width;
+        height -= other.height;
+        return *this;
+    }
+
+    Size operator+(const Size& other) const {
+        Size out = *this;
+        out += other;
+        return out;
+    };
+
+    Size operator-(const Size& other) const {
+        Size out = *this;
+        out -= other;
+        return out;
+    };
     Size operator*(const value_type& other) const {
         Size out = *this;
         out.width *= other;

@@ -11,17 +11,18 @@ void setTextureDrawColor(SDL_Texture* texture, const Color& color) {
 }
 }  // namespace
 
-void Context::clear(Color color) {
+void RenderContext::clear(Color color) {
     setDrawColor(m_renderer, color);
     SDL_RenderClear(m_renderer);
     setDrawColor(m_renderer, m_currentColor);
 }
 
-void Context::present() {
+void RenderContext::present() {
+    m_frameCount++;
     SDL_RenderPresent(m_renderer);
 }
 
-void Context::setColor(Color color) {
+void RenderContext::setColor(Color color) {
     m_currentColor = color;
     setDrawColor(m_renderer, m_currentColor);
     if (m_currentTexture) {
@@ -29,9 +30,9 @@ void Context::setColor(Color color) {
     }
 }
 
-void Context::setTexture(Texture texture) {
+void RenderContext::setTexture(Texture texture) {
     if (texture.key.check % 2 == 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Context::setTexture, invalid check: %d",
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RenderContext::setTexture, invalid check: %d",
                     texture.key.check);
         return;
     }
@@ -46,7 +47,7 @@ void Context::setTexture(Texture texture) {
     }
 }
 
-void Context::drawRect(Rect rect, bool outline) {
+void RenderContext::drawRect(Rect rect, bool outline) {
     SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
     auto r = reinterpret_cast<SDL_FRect*>(&rect);
     if (outline) {
@@ -56,22 +57,26 @@ void Context::drawRect(Rect rect, bool outline) {
     }
 }
 
-void Context::drawTexture(Rect rect, float angleDegree, bool flipX, bool flipY) {
+void RenderContext::drawTexture(Rect rect, float angleDegree, bool flipX, bool flipY) {
     auto dst = reinterpret_cast<SDL_FRect*>(&rect);
     drawTexture(nullptr, dst, angleDegree, flipX, flipY);
 }
 
-void Context::drawTexture(Rect rect, Rect textureRect, float angleDegree, bool flipX, bool flipY) {
+void RenderContext::drawTexture(Rect rect,
+                                Rect textureRect,
+                                float angleDegree,
+                                bool flipX,
+                                bool flipY) {
     auto dst = reinterpret_cast<SDL_FRect*>(&rect);
     auto src = reinterpret_cast<SDL_FRect*>(&textureRect);
     drawTexture(src, dst, angleDegree, flipX, flipY);
 }
 
-void Context::drawTexture(SDL_FRect* src,
-                          SDL_FRect* dst,
-                          float angleDegree,
-                          bool flipX,
-                          bool flipY) {
+void RenderContext::drawTexture(SDL_FRect* src,
+                                SDL_FRect* dst,
+                                float angleDegree,
+                                bool flipX,
+                                bool flipY) {
     SDL_FlipMode flip = SDL_FLIP_NONE;
 
     if (flipX && flipY) {
@@ -86,16 +91,16 @@ void Context::drawTexture(SDL_FRect* src,
                              flip);
 }
 
-void Context::drawPoint(Vec2 point) {
+void RenderContext::drawPoint(Vec2 point) {
     auto p = reinterpret_cast<SDL_FPoint*>(&point);
     SDL_RenderPoints(m_renderer, p, 1);
 }
 
-void Context::drawLine(Vec2 p0, Vec2 p1) {
+void RenderContext::drawLine(Vec2 p0, Vec2 p1) {
     SDL_RenderLine(m_renderer, p0.x, p0.y, p1.x, p1.y);
 }
 
-Texture Context::createTexture(ImageInfo info, PixelRef pixels, TextureOptions options) {
+Texture RenderContext::createTexture(ImageInfo info, PixelRef pixels, TextureOptions options) {
     auto texture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC,
                                      info.width, info.height);
     SDL_Log("create texture %d, %d, %d", info.width, info.height, pixels.stride);
@@ -134,15 +139,15 @@ Texture Context::createTexture(ImageInfo info, PixelRef pixels, TextureOptions o
     return tex;
 }
 
-void Context::deleteTexture(Texture texture) {
+void RenderContext::deleteTexture(Texture texture) {
     if (texture.key.check % 2 == 0) {
-        SDL_Log("Context::deleteTexture, invalid check: %d", texture.key.check);
+        SDL_Log("RenderContext::deleteTexture, invalid check: %d", texture.key.check);
         return;
     }
 
     auto& obj = m_textures.at(texture.key.index);
     if (!obj.ptr || obj.key.check != texture.key.check) {
-        SDL_Log("Context::deleteTexture, invalid check: %d", texture.key.check);
+        SDL_Log("RenderContext::deleteTexture, invalid check: %d", texture.key.check);
         return;
     }
 

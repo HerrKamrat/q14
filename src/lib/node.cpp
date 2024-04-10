@@ -11,7 +11,7 @@ void World::update(UpdateContext& context) {
     }
 };
 
-void World::render(Context& context) {
+void World::render(RenderContext& context) {
     for (auto& node : m_nodes) {
         node->render(context);
     }
@@ -28,7 +28,7 @@ void Node::initWithTextureRect(TextureRect textureRect) {
 
 void Node::update(UpdateContext& context){};
 
-void Node::render(Context& context) {
+void Node::render(RenderContext& context) {
     // context.setColor({255, 255, 0, 125});
     // context.setTexture(nullptr);
     // context.drawRect(visualRect());

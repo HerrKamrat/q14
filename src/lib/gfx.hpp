@@ -43,9 +43,9 @@ struct TextureOptions {
     SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND;
 };
 
-class Context {
+class RenderContext {
   public:
-    Context(SDL_Renderer* renderer) : m_renderer(renderer){};
+    RenderContext(SDL_Renderer* renderer) : m_renderer(renderer){};
 
     void clear(Color color = Colors::WHITE);
     void present();
@@ -72,6 +72,10 @@ class Context {
                           TextureOptions options = TextureOptions());
     void deleteTexture(Texture texture);
 
+    uint64_t frameCount() const {
+        return m_frameCount;
+    }
+
   private:
     void drawTexture(SDL_FRect* src, SDL_FRect* dst, float angleDegree, bool flipX, bool flipY);
 
@@ -91,4 +95,5 @@ class Context {
     TextureObject m_currentTexture{};
 
     std::vector<TextureObject> m_textures;
+    uint64_t m_frameCount;
 };
