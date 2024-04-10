@@ -26,10 +26,10 @@ class App {
 
   protected:
   private:
-    void onResizeEvent(const SDL_WindowEvent& ev);
-    void onKeyEvent(const SDL_KeyboardEvent& ev);
-    void onMouseButtonEvent(const SDL_MouseButtonEvent& ev);
-    void onMouseMotionEvent(const SDL_MouseMotionEvent& ev);
+    void onResizeEvent(const SDL_Event* ev);
+    void onKeyEvent(const SDL_Event* ev);
+    void onMouseButtonEvent(const SDL_Event* ev);
+    void onMouseMotionEvent(const SDL_Event* ev);
 
     SDL_Window* m_window;
     SDL_Renderer* m_renderer;

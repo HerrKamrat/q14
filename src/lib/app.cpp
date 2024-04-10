@@ -53,22 +53,22 @@ void App::event(const SDL_Event* event) {
 
     switch (event->type) {
         case SDL_EVENT_WINDOW_RESIZED: {
-            onResizeEvent(event->window);
+            onResizeEvent(event);
             break;
         }
 
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP: {
-            onKeyEvent(event->key);
+            onKeyEvent(event);
             break;
         }
         case SDL_EVENT_MOUSE_MOTION: {
-            onMouseMotionEvent(event->motion);
+            onMouseMotionEvent(event);
             break;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP: {
-            onMouseButtonEvent(event->button);
+            onMouseButtonEvent(event);
             break;
         }
     };
@@ -101,20 +101,28 @@ int App::status() {
     return m_error ? -1 : (m_exit ? 1 : 0);
 }
 
-void App::onResizeEvent(const SDL_WindowEvent& ev) {
-    m_size = {(float)ev.data1, (float)ev.data2};
+void App::onResizeEvent(const SDL_Event* ev) {
+    m_size = {(float)ev->window.data1, (float)ev->window.data2};
+    ResizeEvent event(ev);
+    m_world.onResizeEvent(event);
+};
+
+void App::onKeyEvent(const SDL_Event* ev) {
+    // bool down = ev.state == SDL_PRESSED;
+    // SDL_Log("KeyboardButton%s: %d", down ? "Down" : "Up", ev.keysym.scancode);
+    KeyboardEvent event(ev);
+    m_world.onKeyboardEvent(event);
 }
 
-void App::onKeyEvent(const SDL_KeyboardEvent& ev) {
-    bool down = ev.state == SDL_PRESSED;
-    SDL_Log("KeyboardButton%s: %d", down ? "Down" : "Up", ev.keysym.scancode);
+void App::onMouseButtonEvent(const SDL_Event* ev) {
+    // bool down = ev.state == SDL_PRESSED;
+    // SDL_Log("MouseButton%s: %d", down ? "Down" : "Up", ev.button);
+    MouseButtonEvent event(ev);
+    m_world.onMouseButtonEvent(event);
 }
 
-void App::onMouseButtonEvent(const SDL_MouseButtonEvent& ev) {
-    bool down = ev.state == SDL_PRESSED;
-    SDL_Log("MouseButton%s: %d", down ? "Down" : "Up", ev.button);
-}
-
-void App::onMouseMotionEvent(const SDL_MouseMotionEvent& ev) {
-    SDL_Log("MouseMotion: %fx%f", ev.x, ev.y);
+void App::onMouseMotionEvent(const SDL_Event* ev) {
+    // SDL_Log("MouseMotion: %fx%f", ev.x, ev.y);
+    MouseMotionEvent event(ev);
+    m_world.onMouseMotionEvent(event);
 }

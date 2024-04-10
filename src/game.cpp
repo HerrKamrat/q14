@@ -6,7 +6,44 @@ Texture tilemapTexture;
 std::vector<TextureRect> cardsTextureRects;
 }  // namespace
 
-class PlayingCard : public Node {};
+class PlayingCard : public Node {
+  public:
+    virtual void onMouseButtonEvent(MouseButtonEvent& event) override {
+        if (m_selected && event.released()) {
+            m_selected = false;
+            setColor(Colors::WHITE);
+            event.stopPropagation();
+            return;
+        }
+
+        if (event.pressed() && visualRect().contains(event.position())) {
+            m_selected = true;
+            m_dragStartPosition = getPosition();
+            setColor(Colors::GREEN);
+            event.stopPropagation();
+            return;
+        }
+    };
+
+    virtual void onMouseMotionEvent(MouseMotionEvent& event) override {
+        if (m_selected) {
+            setPosition(getPosition() + event.delta());
+            return;
+        }
+
+        SDL_Log("onMouseMotionEvent, %fx%f", event.position().x, event.position().y);
+        if (this->visualRect().contains(event.position())) {
+            setColor(Colors::RED);
+            event.stopPropagation();
+        } else {
+            setColor(Colors::WHITE);
+        }
+    };
+
+  private:
+    bool m_selected = false;
+    Vec2 m_dragStartPosition = {0, 0};
+};
 
 World createWorld(Size size, UpdateContext& updateContext, RenderContext& renderContext) {
     {
@@ -32,7 +69,7 @@ World createWorld(Size size, UpdateContext& updateContext, RenderContext& render
     World world;
     Vec2 origin = {1 * size.width / 2, size.height};
     for (int i = 0; i < 5; i++) {
-        auto node = std::make_unique<Node>();
+        auto node = std::make_unique<PlayingCard>();
         auto card = randomElement(cardsTextureRects);
         node->initWithTextureRect(card);
         node->setScale(4);
