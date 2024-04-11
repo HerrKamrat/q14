@@ -27,7 +27,7 @@ jobs:
         run: |
            mkdir _site
            mv build/q14.html _site/index.html
-           mv build/q14-* _site/
+           mv build/q14* _site/
       - name: Fix permissions
         run: |
          chmod -c -R +rX "_site/" | while read line; do
