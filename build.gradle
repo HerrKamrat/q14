@@ -8,7 +8,10 @@ else {
 }
 
 android {
+
+
     compileSdkVersion 34
+    ndkVersion "26.3.11579264"
     if (buildAsApplication) {
         namespace "org.libsdl.app"
     }
@@ -24,7 +27,7 @@ android {
                 // abiFilters 'arm64-v8a'
             }
             cmake {
-                arguments "-DANDROID_APP_PLATFORM=android-16", "-DANDROID_STL=c++_static"
+                arguments "-DANDROID_STL=c++_static"
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 // abiFilters 'arm64-v8a'
             }
