@@ -1,7 +1,11 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
+#include "event.hpp"
 #include "gfx.hpp"
-#if 1
+
 class UpdateContext {
   public:
     void setTicks(uint64_t ticks) {
@@ -22,11 +26,13 @@ class UpdateContext {
 
 class Node;
 
-class World {
+class World : public EventListener {
   public:
     void update(UpdateContext& context);
     void render(RenderContext& context);
     void addNode(std::unique_ptr<Node> node);
+    void onMouseButtonEvent(MouseButtonEvent& event) override;
+    void onMouseMotionEvent(MouseMotionEvent& event) override;
 
     // TODO: remove this...
     size_t size() {
@@ -42,7 +48,7 @@ class World {
     std::vector<std::unique_ptr<Node>> m_nodes;
 };
 
-class Node {
+class Node : public EventListener {
   public:
     void initWithTextureRect(TextureRect textureRect);
     void update(UpdateContext& context);
@@ -121,10 +127,10 @@ class Node {
         return m_scale.y;
     }
 
-  protected:
-  private:
     Rect visualRect();
 
+  protected:
+  private:
     Color m_color{Colors::WHITE};
     TextureRect m_textureRect;
     Rect m_contentRect;
@@ -132,4 +138,3 @@ class Node {
     Vec2 m_scale{1, 1};
     int m_zIndex;
 };
-#endif

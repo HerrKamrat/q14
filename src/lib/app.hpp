@@ -1,9 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include "gfx.hpp"
 #include "node.hpp"
 
-World createWorld(Size size, UpdateContext& updateContext, RenderContext& renderContext);
+std::unique_ptr<World> createWorld(Size size,
+                                   UpdateContext& updateContext,
+                                   RenderContext& renderContext);
 
 class App {
   public:
@@ -26,10 +30,10 @@ class App {
 
   protected:
   private:
-    void onResizeEvent(const SDL_WindowEvent& ev);
-    void onKeyEvent(const SDL_KeyboardEvent& ev);
-    void onMouseButtonEvent(const SDL_MouseButtonEvent& ev);
-    void onMouseMotionEvent(const SDL_MouseMotionEvent& ev);
+    void onResizeEvent(const SDL_Event* ev);
+    void onKeyEvent(const SDL_Event* ev);
+    void onMouseButtonEvent(const SDL_Event* ev);
+    void onMouseMotionEvent(const SDL_Event* ev);
 
     SDL_Window* m_window;
     SDL_Renderer* m_renderer;
@@ -40,5 +44,5 @@ class App {
     UpdateContext m_updateContext;
     RenderContext m_renderContext;
 
-    World m_world;
+    std::unique_ptr<World> m_world;
 };

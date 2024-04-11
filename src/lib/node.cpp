@@ -1,10 +1,12 @@
 #include "node.hpp"
 
+#include <ranges>
+
 void World::update(UpdateContext& context) {
-    std::sort(std::begin(m_nodes), std::end(m_nodes),
-              [](const std::unique_ptr<Node>& a, const std::unique_ptr<Node>& b) {
-                  return a->getZIndex() < b->getZIndex();
-              });
+    std::stable_sort(std::begin(m_nodes), std::end(m_nodes),
+                     [](const std::unique_ptr<Node>& a, const std::unique_ptr<Node>& b) {
+                         return a->getZIndex() < b->getZIndex();
+                     });
 
     for (auto& node : m_nodes) {
         node->update(context);
@@ -16,6 +18,24 @@ void World::render(RenderContext& context) {
         node->render(context);
     }
 }
+
+void World::onMouseButtonEvent(MouseButtonEvent& event) {
+    for (auto it = m_nodes.rbegin(); it != m_nodes.rend(); it++) {
+        (*it)->onMouseButtonEvent(event);
+        if (event.isPropagationStopped()) {
+            break;
+        }
+    }
+};
+
+void World::onMouseMotionEvent(MouseMotionEvent& event) {
+    for (auto it = m_nodes.rbegin(); it != m_nodes.rend(); it++) {
+        (*it)->onMouseMotionEvent(event);
+        if (event.isPropagationStopped()) {
+            break;
+        }
+    }
+};
 
 void World::addNode(std::unique_ptr<Node> node) {
     m_nodes.push_back(std::move(node));

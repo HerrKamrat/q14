@@ -37,7 +37,7 @@ void App::init() {
 
     m_renderContext = {m_renderer};
 
-    m_world = createWorld(m_size, m_updateContext, m_renderContext);
+    m_world = std::move(createWorld(m_size, m_updateContext, m_renderContext));
 }
 
 void App::event(const SDL_Event* event) {
@@ -53,22 +53,22 @@ void App::event(const SDL_Event* event) {
 
     switch (event->type) {
         case SDL_EVENT_WINDOW_RESIZED: {
-            onResizeEvent(event->window);
+            onResizeEvent(event);
             break;
         }
 
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP: {
-            onKeyEvent(event->key);
+            onKeyEvent(event);
             break;
         }
         case SDL_EVENT_MOUSE_MOTION: {
-            onMouseMotionEvent(event->motion);
+            onMouseMotionEvent(event);
             break;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP: {
-            onMouseButtonEvent(event->button);
+            onMouseButtonEvent(event);
             break;
         }
     };
@@ -76,7 +76,7 @@ void App::event(const SDL_Event* event) {
 
 void App::update() {
     m_updateContext.setTicks(SDL_GetTicks());
-    m_world.update(m_updateContext);
+    m_world->update(m_updateContext);
 }
 
 void App::render() {
@@ -86,7 +86,7 @@ void App::render() {
     m_needsRendering = false;
     m_renderContext.clear();
 
-    m_world.render(m_renderContext);
+    m_world->render(m_renderContext);
 
     if (m_renderContext.frameCount() % 2 == 0) {
         m_renderContext.setColor(Colors::RED);
@@ -101,20 +101,23 @@ int App::status() {
     return m_error ? -1 : (m_exit ? 1 : 0);
 }
 
-void App::onResizeEvent(const SDL_WindowEvent& ev) {
-    m_size = {(float)ev.data1, (float)ev.data2};
+void App::onResizeEvent(const SDL_Event* ev) {
+    m_size = {(float)ev->window.data1, (float)ev->window.data2};
+    ResizeEvent event(ev);
+    m_world->onResizeEvent(event);
+};
+
+void App::onKeyEvent(const SDL_Event* ev) {
+    KeyboardEvent event(ev);
+    m_world->onKeyboardEvent(event);
 }
 
-void App::onKeyEvent(const SDL_KeyboardEvent& ev) {
-    bool down = ev.state == SDL_PRESSED;
-    SDL_Log("KeyboardButton%s: %d", down ? "Down" : "Up", ev.keysym.scancode);
+void App::onMouseButtonEvent(const SDL_Event* ev) {
+    MouseButtonEvent event(ev);
+    m_world->onMouseButtonEvent(event);
 }
 
-void App::onMouseButtonEvent(const SDL_MouseButtonEvent& ev) {
-    bool down = ev.state == SDL_PRESSED;
-    SDL_Log("MouseButton%s: %d", down ? "Down" : "Up", ev.button);
-}
-
-void App::onMouseMotionEvent(const SDL_MouseMotionEvent& ev) {
-    SDL_Log("MouseMotion: %fx%f", ev.x, ev.y);
+void App::onMouseMotionEvent(const SDL_Event* ev) {
+    MouseMotionEvent event(ev);
+    m_world->onMouseMotionEvent(event);
 }
