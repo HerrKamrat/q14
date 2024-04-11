@@ -3,10 +3,10 @@
 #include <ranges>
 
 void World::update(UpdateContext& context) {
-    std::sort(std::begin(m_nodes), std::end(m_nodes),
-              [](const std::unique_ptr<Node>& a, const std::unique_ptr<Node>& b) {
-                  return a->getZIndex() < b->getZIndex();
-              });
+    std::stable_sort(std::begin(m_nodes), std::end(m_nodes),
+                     [](const std::unique_ptr<Node>& a, const std::unique_ptr<Node>& b) {
+                         return a->getZIndex() < b->getZIndex();
+                     });
 
     for (auto& node : m_nodes) {
         node->update(context);

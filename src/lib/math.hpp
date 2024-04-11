@@ -1,8 +1,9 @@
 #pragma once
 
-#include <math.h>
-#include <stdint.h>
+#include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <numbers>
 
 struct Intersection;
 struct Size;
@@ -36,6 +37,30 @@ struct Vec2 {
         return out;
     };
 
+    Vec2& operator/=(Vec2 const& other) {
+        x /= other.x;
+        y /= other.y;
+        return *this;
+    }
+
+    Vec2& operator*=(Vec2 const& other) {
+        x *= other.x;
+        y *= other.y;
+        return *this;
+    }
+
+    Vec2 operator/(const Vec2& other) const {
+        Vec2 out = *this;
+        out /= other;
+        return out;
+    };
+
+    Vec2 operator*(const Vec2& other) const {
+        Vec2 out = *this;
+        out *= other;
+        return out;
+    };
+
     Vec2 operator*(const value_type& other) const {
         Vec2 out = *this;
         out.x *= other;
@@ -59,6 +84,16 @@ struct Vec2 {
             return {x / l, y / l};
         }
         return {1, 0};
+    }
+
+    Vec2 rotate(float angleDegree) const {
+        constexpr float pi = std::numbers::pi;
+        float rad = -angleDegree / 180 * pi;
+        float c = std::cos(rad);
+        float s = std::sin(rad);
+        float x0 = c * x - s * y;
+        float y0 = s * x + c * y;
+        return {x0, y0};
     }
 };
 
