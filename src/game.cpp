@@ -89,7 +89,9 @@ class PlayingCard : public Node {
     Vec2 m_mouse = {0, 0};
 };
 
-World createWorld(Size size, UpdateContext& updateContext, RenderContext& renderContext) {
+std::unique_ptr<World> createWorld(Size size,
+                                   UpdateContext& updateContext,
+                                   RenderContext& renderContext) {
     {
         ImageInfo info{(int)tilemap.width, (int)tilemap.height, PixelFormat::RGBA};
         std::span<const uint8_t> s{tilemap.pixel_data,
@@ -110,7 +112,8 @@ World createWorld(Size size, UpdateContext& updateContext, RenderContext& render
         }
     }
 
-    World world;
+    std::unique_ptr<World> world = std::make_unique<World>();
+
 #if 0
     Vec2 origin = {1 * size.width / 2, size.height};
     for (int i = 0; i < 5; i++) {
@@ -156,7 +159,7 @@ World createWorld(Size size, UpdateContext& updateContext, RenderContext& render
         node->setScale(4);
         node->setAngle(math::random(-5, 5));
         node->setPosition(origin);
-        world.addNode(std::move(node));
+        world->addNode(std::move(node));
     }
 
 #endif

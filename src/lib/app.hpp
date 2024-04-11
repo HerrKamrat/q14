@@ -3,7 +3,9 @@
 #include "gfx.hpp"
 #include "node.hpp"
 
-World createWorld(Size size, UpdateContext& updateContext, RenderContext& renderContext);
+std::unique_ptr<World> createWorld(Size size,
+                                   UpdateContext& updateContext,
+                                   RenderContext& renderContext);
 
 class App {
   public:
@@ -40,5 +42,5 @@ class App {
     UpdateContext m_updateContext;
     RenderContext m_renderContext;
 
-    World m_world;
+    std::unique_ptr<World> m_world;
 };
