@@ -26,16 +26,16 @@ jobs:
       - name: Prepare for upload
         run: |
            mkdir _site
-           mv build/sdl-min.html _site/index.html
-           mv build/sdl-* _site/
+           mv build/q14.html _site/index.html
+           mv build/q14-* _site/
       - name: Fix permissions
         run: |
          chmod -c -R +rX "_site/" | while read line; do
            echo "::warning title=Invalid file permissions automatically fixed::$line"
          done
-      - name: Upload 
+      - name: Upload
         uses: actions/upload-pages-artifact@v2
-        
+
  # Deploy job
   deploy:
     # Add a dependency to the build job

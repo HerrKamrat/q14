@@ -9,7 +9,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE INTERNAL "")
 
 # Declare the project
-project(Q14)
+project(q14)
 
 # Set the name of the executable
 set(EXECUTABLE_NAME ${PROJECT_NAME})
