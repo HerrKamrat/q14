@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "gfx.hpp"
 #include "node.hpp"
 

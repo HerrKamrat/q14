@@ -22,6 +22,8 @@ if (ANDROID)
 else()
 	add_executable(${EXECUTABLE_NAME})
 endif()
+set_property(TARGET ${EXECUTABLE_NAME} PROPERTY CXX_STANDARD 20)
+
 
 file(GLOB_RECURSE SRC_FILES
      "src/**.hpp"

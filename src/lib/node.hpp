@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include "event.hpp"
 #include "gfx.hpp"
 

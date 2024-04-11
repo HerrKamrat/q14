@@ -108,21 +108,16 @@ void App::onResizeEvent(const SDL_Event* ev) {
 };
 
 void App::onKeyEvent(const SDL_Event* ev) {
-    // bool down = ev.state == SDL_PRESSED;
-    // SDL_Log("KeyboardButton%s: %d", down ? "Down" : "Up", ev.keysym.scancode);
     KeyboardEvent event(ev);
     m_world->onKeyboardEvent(event);
 }
 
 void App::onMouseButtonEvent(const SDL_Event* ev) {
-    // bool down = ev.state == SDL_PRESSED;
-    // SDL_Log("MouseButton%s: %d", down ? "Down" : "Up", ev.button);
     MouseButtonEvent event(ev);
     m_world->onMouseButtonEvent(event);
 }
 
 void App::onMouseMotionEvent(const SDL_Event* ev) {
-    // SDL_Log("MouseMotion: %fx%f", ev.x, ev.y);
     MouseMotionEvent event(ev);
     m_world->onMouseMotionEvent(event);
 }
