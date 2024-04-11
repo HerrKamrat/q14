@@ -75,7 +75,6 @@ class PlayingCard : public Node {
             return;
         }
 
-        SDL_Log("onMouseMotionEvent, %fx%f", event.position().x, event.position().y);
         if (contains(event.position())) {
             setColor({255, 255, 125});
             event.stopPropagation();

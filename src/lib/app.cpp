@@ -24,6 +24,13 @@ void App::init() {
 
     SDL_ShowWindow(window);
 
+    {
+        SDL_RendererInfo info;
+        SDL_GetRendererInfo(renderer, &info);
+        SDL_Log("Renderer: %s", info.name);
+        SDL_Log("Max texture size: %d x %d", info.max_texture_width, info.max_texture_height);
+    }
+
     int width, height, bbwidth, bbheight;
     SDL_GetWindowSize(window, &width, &height);
     SDL_GetWindowSizeInPixels(window, &bbwidth, &bbheight);
@@ -43,6 +50,12 @@ void App::init() {
 }
 
 void App::event(const SDL_Event* event) {
+#ifdef ANDROID
+    if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_AC_BACK) {
+        SDL_MinimizeWindow(m_window);
+        return;
+    }
+#endif
     m_needsRendering = true;
     if (event->type == SDL_EVENT_QUIT) {
         m_exit = true;
@@ -105,6 +118,7 @@ int App::status() {
 
 void App::onResizeEvent(const SDL_Event* ev) {
     m_size = {(float)ev->window.data1, (float)ev->window.data2};
+    SDL_Log("ResizeEvent: %d x %d", ev->window.data1, ev->window.data2);
     ResizeEvent event(ev);
     m_world->onResizeEvent(event);
 };

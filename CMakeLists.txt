@@ -9,7 +9,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE INTERNAL "")
 
 # Declare the project
-project(q14)
+project(q14 VERSION 0.0.2)
+add_compile_definitions(VERSION="${CMAKE_PROJECT_VERSION}")
 
 # Set the name of the executable
 set(EXECUTABLE_NAME ${PROJECT_NAME})
@@ -55,11 +56,9 @@ elseif(APPLE)
     target_sources("${EXECUTABLE_NAME}" PRIVATE "src/logo.png")
 endif()
 
-# use C++11
-target_compile_features(${EXECUTABLE_NAME} PUBLIC cxx_std_20)
-
 if(CMAKE_SYSTEM_NAME MATCHES Emscripten)
-	set(CMAKE_EXECUTABLE_SUFFIX ".html" CACHE INTERNAL "")
+    target_link_options(${EXECUTABLE_NAME} PUBLIC "--shell-file" "${CMAKE_CURRENT_SOURCE_DIR}/shell.file.html")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html" CACHE INTERNAL "")
 endif()
 
 # If targeting Windows UWP, enable Windows Runtime Compilation
