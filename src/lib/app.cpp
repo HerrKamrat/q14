@@ -1,5 +1,7 @@
 #include "app.hpp"
 
+#include "misc.hpp"
+
 App::App() : m_renderContext(nullptr) {
 }
 
@@ -7,7 +9,7 @@ App::~App() {
 }
 
 void App::init() {
-    SDL_Window* window = SDL_CreateWindow("tmp", 640, 480, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow(version(), 640, 480, SDL_WINDOW_RESIZABLE);
     if (!window) {
         m_error = true;
         return;

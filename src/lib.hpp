@@ -5,6 +5,5 @@
 #include "lib/event.hpp"
 #include "lib/gfx.hpp"
 #include "lib/math.hpp"
+#include "lib/misc.hpp"
 #include "lib/node.hpp"
-
-char* version();
