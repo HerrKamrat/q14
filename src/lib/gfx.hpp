@@ -15,12 +15,18 @@ enum class PixelFormat {
 struct ImageInfo {
     int width;
     int height;
-    PixelFormat format;
+    PixelFormat format = PixelFormat::RGBA;
 };
 
 struct PixelRef {
     std::span<const uint8_t> data;
     int stride;
+};
+
+struct Image {
+    ImageInfo info;
+    PixelRef pixels;
+    std::unique_ptr<uint8_t, void (*)(void*)> data = {nullptr, nullptr};
 };
 
 struct Texture {
@@ -36,6 +42,12 @@ struct Texture {
 struct TextureRect {
     Texture texture;
     Rect bounds;
+
+    Rect normalizedBounds() const {
+        int w = texture.width;
+        int h = texture.height;
+        return {{bounds.origin.x / w, bounds.origin.y / h}, {bounds.size.x / w, bounds.size.y / h}};
+    }
 };
 
 struct TextureOptions {
@@ -64,6 +76,8 @@ class RenderContext {
                      bool flipX = false,
                      bool flipY = false);
 
+    void drawTexture(const Rect& rect, const Rect& textureRect, const Mat3& matrix);
+
     void drawPoint(Vec2 point);
     void drawLine(Vec2 p0, Vec2 p1);
 
@@ -74,6 +88,15 @@ class RenderContext {
 
     uint64_t frameCount() const {
         return m_frameCount;
+    }
+
+    // TODO: tmp
+    SDL_Renderer* getRenderer() {
+        return m_renderer;
+    }
+
+    SDL_Texture* getTexture() {
+        return m_currentTexture.ptr;
     }
 
   private:

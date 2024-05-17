@@ -28,9 +28,11 @@ class Node;
 
 class World : public EventListener {
   public:
-    void update(UpdateContext& context);
-    void render(RenderContext& context);
+    virtual void init(UpdateContext& updateContext, RenderContext& renderContext){};
+    virtual void update(UpdateContext& context);
+    virtual void render(RenderContext& context);
     void addNode(std::unique_ptr<Node> node);
+
     void onMouseButtonEvent(MouseButtonEvent& event) override;
     void onMouseMotionEvent(MouseMotionEvent& event) override;
 
@@ -44,8 +46,13 @@ class World : public EventListener {
         return m_nodes.at(index).get();
     }
 
+    bool isAnimating() const {
+        return m_isAnimating;
+    }
+
   private:
     std::vector<std::unique_ptr<Node>> m_nodes;
+    bool m_isAnimating{true};
 };
 
 class Node : public EventListener {

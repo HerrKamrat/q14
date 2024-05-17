@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "gfx.hpp"
+#include "input.hpp"
 #include "node.hpp"
 
 std::unique_ptr<World> createWorld(Size size,
@@ -20,6 +21,11 @@ class App {
     void render();
 
     int status();
+
+    void setWorld(std::unique_ptr<World> world);
+    World* getWorld() {
+        return m_world.get();
+    };
 
     SDL_Window* window() const {
         return m_window;
@@ -43,6 +49,8 @@ class App {
     Size m_size;
     UpdateContext m_updateContext;
     RenderContext m_renderContext;
+
+    InputManager m_inputManager;
 
     std::unique_ptr<World> m_world;
 };

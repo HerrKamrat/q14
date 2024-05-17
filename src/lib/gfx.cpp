@@ -9,6 +9,11 @@ void setTextureDrawColor(SDL_Texture* texture, const Color& color) {
     SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
     SDL_SetTextureAlphaMod(texture, color.a);
 }
+
+SDL_FColor toFColor(const Color& color) {
+    return {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f};
+};
+
 }  // namespace
 
 void RenderContext::clear(Color color) {
@@ -72,6 +77,35 @@ void RenderContext::drawTexture(Rect rect,
     drawTexture(src, dst, angleDegree, flipX, flipY);
 }
 
+void RenderContext::drawTexture(const Rect& rect, const Rect& uvRect, const Mat3& matrix) {
+    SDL_Vertex vertices[4];
+    const int indices[6] = {0, 1, 2, 2, 1, 3};
+
+    auto m = matrix;
+    auto t = uvRect;
+
+    auto c0 = m * glm::vec3(rect.left(), rect.top(), 1);
+    auto c1 = m * glm::vec3(rect.right(), rect.top(), 1);
+    auto c2 = m * glm::vec3(rect.left(), rect.bottom(), 1);
+    auto c3 = m * glm::vec3(rect.right(), rect.bottom(), 1);
+
+    SDL_FColor c = toFColor(m_currentColor);
+    vertices[0].position = {c0.x, c0.y};
+    vertices[0].tex_coord = {t.left(), t.top()};
+    vertices[0].color = c;
+    vertices[1].position = {c1.x, c1.y};
+    vertices[1].tex_coord = {t.right(), t.top()};
+    vertices[1].color = c;
+    vertices[2].position = {c2.x, c2.y};
+    vertices[2].tex_coord = {t.left(), t.bottom()};
+    vertices[2].color = c;
+    vertices[3].position = {c3.x, c3.y};
+    vertices[3].tex_coord = {t.right(), t.bottom()};
+    vertices[3].color = c;
+
+    SDL_RenderGeometry(m_renderer, m_currentTexture.ptr, &vertices[0], 4, &indices[0], 6);
+}
+
 void RenderContext::drawTexture(SDL_FRect* src,
                                 SDL_FRect* dst,
                                 float angleDegree,
@@ -87,7 +121,8 @@ void RenderContext::drawTexture(SDL_FRect* src,
         flip = SDL_FLIP_VERTICAL;
     }
 
-    SDL_RenderTextureRotated(m_renderer, m_currentTexture.ptr, src, dst, angleDegree, nullptr,
+    SDL_FPoint center{0, 0};
+    SDL_RenderTextureRotated(m_renderer, m_currentTexture.ptr, src, dst, angleDegree, &center,
                              flip);
 }
 

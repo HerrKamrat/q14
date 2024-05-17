@@ -2,7 +2,7 @@
 
 #include "misc.hpp"
 
-App::App() : m_renderContext(nullptr) {
+App::App() : m_renderContext(nullptr), m_world(std::make_unique<World>()) {
 }
 
 App::~App() {
@@ -46,7 +46,7 @@ void App::init() {
 
     m_renderContext = {m_renderer};
 
-    m_world = std::move(createWorld(m_size, m_updateContext, m_renderContext));
+    m_inputManager.init();
 }
 
 void App::event(const SDL_Event* event) {
@@ -66,6 +66,10 @@ void App::event(const SDL_Event* event) {
     }
 #endif
 
+    if (m_inputManager.handleEvent(event)) {
+        return;
+    }
+
     switch (event->type) {
         case SDL_EVENT_WINDOW_RESIZED: {
             onResizeEvent(event);
@@ -75,6 +79,15 @@ void App::event(const SDL_Event* event) {
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP: {
             onKeyEvent(event);
+            break;
+        }
+        case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
+            SDL_Log("gamepad axis - %d: %d", event->gaxis.axis, event->gaxis.value);
+            break;
+        }
+        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+        case SDL_EVENT_GAMEPAD_BUTTON_UP: {
+            SDL_Log("gamepad button - button: %d", event->gbutton.button);
             break;
         }
         case SDL_EVENT_MOUSE_MOTION: {
@@ -95,7 +108,7 @@ void App::update() {
 }
 
 void App::render() {
-    if (!m_needsRendering) {
+    if (!m_needsRendering && !m_world->isAnimating()) {
         return;
     }
     m_needsRendering = false;
@@ -114,6 +127,13 @@ void App::render() {
 
 int App::status() {
     return m_error ? -1 : (m_exit ? 1 : 0);
+}
+
+void App::setWorld(std::unique_ptr<World> world) {
+    m_world = std::move(world);
+    if (m_world) {
+        m_world->init(m_updateContext, m_renderContext);
+    }
 }
 
 void App::onResizeEvent(const SDL_Event* ev) {

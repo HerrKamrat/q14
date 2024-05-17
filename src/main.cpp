@@ -4,6 +4,10 @@
 
 #include "lib.hpp"
 
+// #include "game.hpp"
+#include "resources.hpp"
+#include "test.hpp"
+
 int SDL_Fail() {
     SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error %s", SDL_GetError());
     return -1;
@@ -11,7 +15,7 @@ int SDL_Fail() {
 
 int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     // init the library, here we make a window so we only need the Video capabilities.
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD)) {
         return SDL_Fail();
     }
 
@@ -21,6 +25,8 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     auto app = new App();
     *appstate = app;
     app->init();
+
+    app->setWorld(std::make_unique<Test>());
 
     SDL_Log("Application started successfully!");
     return app->status();

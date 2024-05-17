@@ -4,6 +4,8 @@
 #include "lib/color.hpp"
 #include "lib/event.hpp"
 #include "lib/gfx.hpp"
+#include "lib/input.hpp"
 #include "lib/math.hpp"
 #include "lib/misc.hpp"
 #include "lib/node.hpp"
+#include "lib/resource_loader.hpp"
