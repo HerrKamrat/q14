@@ -102,6 +102,17 @@ class Player : public Node {
 };
 
 void Test::init(UpdateContext& updateContext, RenderContext& renderContext) {
+    auto img = ResourceLoader::loadImage(Resources::Images::Tiles::Small);
+    auto tex = renderContext.createTexture(img.info, img.pixels);
+    auto node = std::make_unique<Node>();
+    node->setTexture(tex);
+    node->setOrigin({-1, -1});
+    node->setSize({2, 2});
+    node->setPosition({100, 100});
+    // node->setScale(10);
+    Node* ptr = node.get();
+    addNode(std::move(node));
+
     {
         b2WorldDef worldDef = b2DefaultWorldDef();
         worldDef.gravity = (b2Vec2){0.0f, 10.0f};
@@ -129,10 +140,14 @@ void Test::init(UpdateContext& updateContext, RenderContext& renderContext) {
         int rows = 10;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols - i; j++) {
+                if ((i == (rows - 1)) && j == 0) {
+                    bodyDef.userData = ptr;
+                }
                 bodyDef.position.x = 32 - 5 + j * 2.25f + i * 1.125f;
                 bodyDef.position.y = 10 - i * 2.25f;
                 b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
                 b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
+                bodyDef.userData = nullptr;
             }
         }
 
@@ -162,13 +177,6 @@ void Test::init(UpdateContext& updateContext, RenderContext& renderContext) {
     }
 
     if (false) {
-        auto img = ResourceLoader::loadImage(Resources::Images::Tiles::Small);
-        auto tex = renderContext.createTexture(img.info, img.pixels);
-        auto node = std::make_unique<Node>();
-        node->setTexture(tex);
-        node->setSize({100, 100});
-        node->setPosition({100, 100});
-        addNode(std::move(node));
     }
 
     if (false) {
@@ -191,17 +199,31 @@ void Test::update(UpdateContext& context) {
     int subStepCount = 4;
 
     b2World_Step(m_worldId, timeStep, subStepCount);
+
     // b2Vec2 position = b2Body_GetPosition(m_bodyId);
     // float angle = b2Body_GetAngle(m_bodyId);
     // SDL_Log("%4.2f %4.2f %4.2f\n", position.x, position.y, angle);
 };
+
 void Test::render(RenderContext& context) {
-    World::render(context);
     Transform transform;
     transform.setScale(10);
     context.setTransform(transform);
     m_debugDraw.context = &context;
     b2World_Draw(m_worldId, &m_debugDraw);
+    b2BodyEvents events = b2World_GetBodyEvents(m_worldId);
+    for (int i = 0; i < events.moveCount; i++) {
+        auto event = events.moveEvents[i];
+        if (event.userData) {
+            Node* ptr = (Node*)event.userData;
+            Vec2 p = {event.transform.p.x, event.transform.p.y};
+            float r = b2Rot_GetAngle(event.transform.q);
+            ptr->setPosition(p);
+            ptr->setRotation(r);
+        }
+    }
+
+    World::render(context);
 };
 
 void Test::onKeyboardEvent(KeyboardEvent& event) {

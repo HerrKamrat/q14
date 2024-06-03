@@ -81,8 +81,6 @@ target_link_libraries(${EXECUTABLE_NAME} PUBLIC glm)
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC box2d)
 
 
-
-
 # set some extra configs for each platform
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES
     # On macOS, make a proper .app bundle instead of a bare executable

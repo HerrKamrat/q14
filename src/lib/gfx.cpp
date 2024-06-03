@@ -85,7 +85,7 @@ void RenderContext::drawTexture(const Rect& rect, const Rect& uvRect, const Mat3
     SDL_Vertex vertices[4];
     const int indices[6] = {0, 1, 2, 2, 1, 3};
 
-    auto m = matrix;
+    auto m = m_transform.getMatrix() * matrix;
     auto t = uvRect;
 
     auto c0 = m * glm::vec3(rect.left(), rect.top(), 1);
