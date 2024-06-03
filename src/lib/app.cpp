@@ -44,6 +44,7 @@ void App::init() {
     m_renderer = renderer;
     m_size = {(float)bbwidth, (float)bbheight};
 
+    m_updateContext.setTicks(SDL_GetTicks());
     m_renderContext = {m_renderer};
 
     m_inputManager.init();
@@ -81,15 +82,6 @@ void App::event(const SDL_Event* event) {
             onKeyEvent(event);
             break;
         }
-        case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
-            SDL_Log("gamepad axis - %d: %d", event->gaxis.axis, event->gaxis.value);
-            break;
-        }
-        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-        case SDL_EVENT_GAMEPAD_BUTTON_UP: {
-            SDL_Log("gamepad button - button: %d", event->gbutton.button);
-            break;
-        }
         case SDL_EVENT_MOUSE_MOTION: {
             onMouseMotionEvent(event);
             break;
@@ -103,8 +95,27 @@ void App::event(const SDL_Event* event) {
 }
 
 void App::update() {
-    m_updateContext.setTicks(SDL_GetTicks());
-    m_world->update(m_updateContext);
+    const double updateRate = 1.0 / 60.0;
+    const uint64_t updateTicks = updateRate * 1000;
+    const int maxIterations = 5;
+
+    auto currentTicks = SDL_GetTicks();
+    auto lastTicks = m_updateContext.getTicks();
+    auto delta = currentTicks - lastTicks;
+    int iterations = delta / updateTicks;
+
+    if (iterations <= 0) {
+        return;
+    }
+
+    for (int i = std::min(iterations, maxIterations); i > 0; i--) {
+        lastTicks = lastTicks + updateTicks;
+        m_updateContext.setTicks(lastTicks);
+        m_updateContext.setInputState(m_inputManager.getState(true));
+        m_world->update(m_updateContext);
+    }
+
+    m_updateContext.setTicks(lastTicks + iterations * updateTicks);
 }
 
 void App::render() {
@@ -112,12 +123,12 @@ void App::render() {
         return;
     }
     m_needsRendering = false;
-    m_renderContext.clear();
+    m_renderContext.clear(Colors::BLACK);
 
     m_world->render(m_renderContext);
 
     if (m_renderContext.frameCount() % 2 == 0) {
-        m_renderContext.setColor(Colors::RED);
+        m_renderContext.setColor({255, 0, 0, 125});
         m_renderContext.drawRect({{0, 0}, m_size}, true);
         m_renderContext.setColor(Colors::WHITE);
     }

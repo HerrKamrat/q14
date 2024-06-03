@@ -8,9 +8,7 @@
 #include "color.hpp"
 #include "math.hpp"
 
-enum class PixelFormat {
-    RGBA,
-};
+enum class PixelFormat { RGBA };
 
 struct ImageInfo {
     int width;
@@ -55,12 +53,18 @@ struct TextureOptions {
     SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND;
 };
 
+struct Vertex {
+    Vec2 position;
+};
+
 class RenderContext {
   public:
     RenderContext(SDL_Renderer* renderer) : m_renderer(renderer){};
 
     void clear(Color color = Colors::WHITE);
     void present();
+
+    void setTransform(const Transform& transform);
 
     void setColor(Color color);
     void setTexture(Texture texture);
@@ -80,6 +84,8 @@ class RenderContext {
 
     void drawPoint(Vec2 point);
     void drawLine(Vec2 p0, Vec2 p1);
+
+    void drawPolygon(int vertexCount, bool outline, std::function<void(Vertex&, int)> callback);
 
     Texture createTexture(ImageInfo info,
                           PixelRef pixels,
@@ -119,4 +125,6 @@ class RenderContext {
 
     std::vector<TextureObject> m_textures;
     uint64_t m_frameCount;
+
+    Transform m_transform;
 };

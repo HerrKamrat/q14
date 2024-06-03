@@ -1,4 +1,9 @@
 #include "math.hpp"
+bool Rect::contains(const Vec2& p) const {
+    return p.x >= left() && p.x <= right() && p.y >= top() && p.y <= bottom();
+}
+
+#if 0
 
 namespace {
 using namespace math;
@@ -25,9 +30,6 @@ bool intersects(const Rect& a, const Rect& b, Intersection& intersection) {
 
 }  // namespace
 
-bool Rect::contains(const Vec2& p) const {
-    return p.x >= left() && p.x <= right() && p.y >= top() && p.y <= bottom();
-}
 
 bool Rect::collision(const Rect& other) const {
     return ::collision(*this, other);
@@ -39,6 +41,8 @@ bool Rect::intersects(const Rect& other, Intersection* intersection = nullptr) c
     }
     return ::intersects(*this, other, *intersection);
 }
+
+#endif
 
 float math::random() {
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);

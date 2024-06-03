@@ -57,7 +57,7 @@ elseif(APPLE)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES Emscripten)
-    target_link_options(${EXECUTABLE_NAME} PUBLIC "--shell-file" "${CMAKE_CURRENT_SOURCE_DIR}/shell.file.html")
+    target_link_options(${EXECUTABLE_NAME} PUBLIC "-s" "STACK_SIZE=131072" "--shell-file" "${CMAKE_CURRENT_SOURCE_DIR}/shell.file.html")
     set(CMAKE_EXECUTABLE_SUFFIX ".html" CACHE INTERNAL "")
 endif()
 
@@ -70,10 +70,18 @@ endif()
 # we use EXCLUDE_FROM_ALL so that its install targets and configs don't
 # pollute upwards into our configuration.
 add_subdirectory(SDL EXCLUDE_FROM_ALL)
+add_subdirectory(glm EXCLUDE_FROM_ALL)
+add_subdirectory(box2c EXCLUDE_FROM_ALL)
 
 # Link SDL to our executable. This also makes its include directory available to us.
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC SDL3::SDL3)
 target_compile_definitions(${EXECUTABLE_NAME} PUBLIC SDL_MAIN_USE_CALLBACKS)
+
+target_link_libraries(${EXECUTABLE_NAME} PUBLIC glm)
+target_link_libraries(${EXECUTABLE_NAME} PUBLIC box2d)
+
+
+
 
 # set some extra configs for each platform
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES

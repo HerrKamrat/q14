@@ -20,12 +20,12 @@ Image ResourceLoader::loadImage(std::span<const uint8_t> data) {
     image.info.width = w;
     image.info.height = h;
 
-    image.pixels.data = {img, (size_t)w * h * n};
-    image.pixels.stride = w * n;
+    image.pixels.data = {img, (size_t)w * h * 4};
+    image.pixels.stride = w * 4;
 
     image.data = {img, stbi_image_free};
 
-    // SDL_Log("tiles: %d x %d", data.size(), data.size_bytes());
+    // SDL_Log("data: %d x %d", data.size(), data.size_bytes());
     // SDL_Log("img: %d x %d x %d", w, h, n);
     return image;
 }

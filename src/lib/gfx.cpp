@@ -27,6 +27,10 @@ void RenderContext::present() {
     SDL_RenderPresent(m_renderer);
 }
 
+void RenderContext::setTransform(const Transform& transform) {
+    m_transform = transform;
+}
+
 void RenderContext::setColor(Color color) {
     m_currentColor = color;
     setDrawColor(m_renderer, m_currentColor);
@@ -133,6 +137,27 @@ void RenderContext::drawPoint(Vec2 point) {
 
 void RenderContext::drawLine(Vec2 p0, Vec2 p1) {
     SDL_RenderLine(m_renderer, p0.x, p0.y, p1.x, p1.y);
+}
+
+void RenderContext::drawPolygon(int vertexCount,
+                                bool outline,
+                                std::function<void(Vertex&, int)> callback) {
+    const int indices[6] = {0, 1, 2, 2, 3, 0};
+    std::vector<SDL_Vertex> vertices;
+    vertices.resize(vertexCount);
+
+    Vertex vertex;
+    for (int i = 0; i < vertexCount; i++) {
+        vertex = {};
+        callback(vertex, i);
+        vertex.position = m_transform.transform(vertex.position);
+
+        vertices[i].position.x = vertex.position.x;
+        vertices[i].position.y = vertex.position.y;
+        vertices[i].color = {255, 255, 255, 255};
+    }
+
+    SDL_RenderGeometry(m_renderer, m_currentTexture.ptr, &vertices[0], 4, &indices[0], 6);
 }
 
 Texture RenderContext::createTexture(ImageInfo info, PixelRef pixels, TextureOptions options) {

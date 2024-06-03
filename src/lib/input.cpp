@@ -38,3 +38,10 @@ bool InputManager::handleEvent(const SDL_Event* event) {
     }
     return true;
 }
+
+InputState InputManager::getState(bool clearNewFlags) {
+    InputState state = m_state;
+    if (clearNewFlags) {
+    }
+    return state;
+}
