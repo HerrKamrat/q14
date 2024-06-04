@@ -2,6 +2,7 @@
 
 #include <SDL.h>
 
+#include <memory>
 #include <span>
 #include <vector>
 
