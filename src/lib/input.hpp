@@ -4,13 +4,19 @@
 
 struct AnalogInputValue {
     float value = 0;
-    bool justTriggered = false;
+    // bool justTriggered = false;
+    inline bool active() const {
+        return value != 0;
+    }
 };
 
-struct DigitalInputValue {
-    bool pressed = false;
-    bool justTriggered = false;
-};
+// struct DigitalInputValue {
+//     bool pressed = false;
+//     // bool justTriggered = false;
+//     inline bool active() const {
+//         return pressed;
+//     }
+// };
 
 struct InputState {
     AnalogInputValue up;
@@ -18,8 +24,8 @@ struct InputState {
     AnalogInputValue left;
     AnalogInputValue right;
 
-    DigitalInputValue primaryAction;
-    DigitalInputValue secondaryAction;
+    AnalogInputValue primaryAction;
+    AnalogInputValue secondaryAction;
 };
 
 class InputManager {

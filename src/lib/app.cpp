@@ -9,7 +9,8 @@ App::~App() {
 }
 
 void App::init() {
-    SDL_Window* window = SDL_CreateWindow(version(), 640, 480, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window =
+        SDL_CreateWindow(version(), 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (!window) {
         m_error = true;
         return;
@@ -73,7 +74,26 @@ void App::event(const SDL_Event* event) {
 
     switch (event->type) {
         case SDL_EVENT_WINDOW_RESIZED: {
+            SDL_Log("SDL_EVENT_WINDOW_RESIZED %d x %d", event->window.data1, event->window.data2);
+            break;
+        }
+
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+            SDL_Log("SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED %d x %d", event->window.data1,
+                    event->window.data2);
             onResizeEvent(event);
+
+            break;
+        }
+
+        case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED: {
+            SDL_Log("SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED %d x %d", event->window.data1,
+                    event->window.data2);
+            break;
+        }
+
+        case SDL_EVENT_WINDOW_DISPLAY_CHANGED: {
+            SDL_Log("SDL_EVENT_WINDOW_DISPLAY_CHANGED %d", event->window.data1);
             break;
         }
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 # set the output directory for built objects.
 # This makes sure that the dynamic library goes into the build directory automatically.
@@ -9,11 +9,21 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE INTERNAL "")
 
 # Declare the project
-project(q14 VERSION 0.0.2)
+project(q14 VERSION 0.0.3)
 add_compile_definitions(VERSION="${CMAKE_PROJECT_VERSION}")
 
 # Set the name of the executable
 set(EXECUTABLE_NAME ${PROJECT_NAME})
+set(PROJECT_VERSION ${CMAKE_PROJECT_VERSION})
+string(TIMESTAMP CURRENTYEAR "%Y")
+
+set(EXECUTABLE_NAME ${PROJECT_NAME})
+set(PROJECT_VERSION ${CMAKE_PROJECT_VERSION})
+set(PROJECT_VERSION_LABEL ${CMAKE_BUILD_TYPE})
+set(PROJECT_FULL_VERSION_STRING "v${PROJECT_VERSION}-${PROJECT_VERSION_LABEL}")
+
+
+add_compile_definitions(FULL_VERSION_STRING="${PROJECT_FULL_VERSION_STRING}")
 
 # Create an executable or a shared library based on the platform and add our sources to it
 if (ANDROID)
@@ -80,6 +90,8 @@ target_compile_definitions(${EXECUTABLE_NAME} PUBLIC SDL_MAIN_USE_CALLBACKS)
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC glm)
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC box2d)
 
+configure_file(src/Info.plist.in ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
+configure_file(src/iosLaunchScreen.storyboard.in ${CMAKE_CURRENT_BINARY_DIR}/iosLaunchScreen.storyboard)
 
 # set some extra configs for each platform
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES
@@ -87,13 +99,15 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
     # Set the Info.plist file for Apple Mobile platforms. Without this file, your app
     # will not launch.
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/src/Info.plist.in"
+    # MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/src/Info.plist.in"
+    XCODE_ATTRIBUTE_INFOPLIST_FILE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
+    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
 
     # in Xcode, create a Scheme in the schemes dropdown for the app.
     XCODE_GENERATE_SCHEME TRUE
     # Identification for Xcode
-    XCODE_ATTRIBUTE_BUNDLE_IDENTIFIER "com.ravbug.sdl3-sample"
-	XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.ravbug.sdl3-sample"
+    XCODE_ATTRIBUTE_BUNDLE_IDENTIFIER "io.github.herrkamrat.#{PROJECT_NAME}"
+	XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "io.github.herrkamrat.#{PROJECT_NAME}"
 	XCODE_ATTRIBUTE_CURRENTYEAR "${CURRENTYEAR}"
 )
 

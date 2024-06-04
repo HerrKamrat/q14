@@ -17,6 +17,33 @@ bool InputManager::init() {
 
 bool InputManager::handleEvent(const SDL_Event* event) {
     switch (event->type) {
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP: {
+            // SDL_Log("key: %d %d", event->key.keysym.scancode, event->key.state);
+            switch (event->key.keysym.scancode) {
+                case SDL_SCANCODE_W:
+                    m_state.up.value = event->key.state;
+                    break;
+                case SDL_SCANCODE_A:
+                    m_state.left.value = event->key.state;
+                    break;
+                case SDL_SCANCODE_S:
+                    m_state.down.value = event->key.state;
+                    break;
+                case SDL_SCANCODE_D:
+                    m_state.right.value = event->key.state;
+                    break;
+                case SDL_SCANCODE_K:
+                    m_state.primaryAction.value = event->key.state;
+                    break;
+                case SDL_SCANCODE_L:
+                    m_state.secondaryAction.value = event->key.state;
+                    break;
+                default:
+                    break;
+            };
+            break;
+        }
         case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
             SDL_Log("Gamepad axis motion, axis: %d, value: %d", event->gaxis.axis,
                     event->gaxis.value);
@@ -42,6 +69,7 @@ bool InputManager::handleEvent(const SDL_Event* event) {
 InputState InputManager::getState(bool clearNewFlags) {
     InputState state = m_state;
     if (clearNewFlags) {
+        // TODO
     }
     return state;
 }

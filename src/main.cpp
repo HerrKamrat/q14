@@ -1,6 +1,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <box2d/box2d.h>
 #include <cmath>
+#include <glm/common.hpp>
 
 #include "lib.hpp"
 
@@ -17,6 +19,20 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     // init the library, here we make a window so we only need the Video capabilities.
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD)) {
         return SDL_Fail();
+    }
+
+    {
+        SDL_Version version;
+        if (!SDL_GetVersion(&version)) {
+            SDL_Log("SDL: %d.%d.%d", version.major, version.minor, version.patch);
+        }
+    }
+
+    SDL_Log("GLM: %d.%d.%d", GLM_VERSION_MAJOR, GLM_VERSION_MINOR, GLM_VERSION_PATCH);
+
+    {
+        auto version = b2GetVersion();
+        SDL_Log("Box2c: %d.%d.%d", version.major, version.minor, version.revision);
     }
 
     std::srand(std::time(NULL));

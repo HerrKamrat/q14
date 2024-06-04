@@ -55,6 +55,7 @@ struct TextureOptions {
 
 struct Vertex {
     Vec2 position;
+    Color color;
 };
 
 class RenderContext {

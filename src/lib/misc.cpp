@@ -1,5 +1,5 @@
 #include "misc.hpp"
 
 const char* version() {
-    return "v" VERSION;
+    return FULL_VERSION_STRING;
 };

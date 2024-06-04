@@ -8,10 +8,13 @@
 Image ResourceLoader::loadImage(std::span<const uint8_t> data) {
     Image image;  //{{}, {}, {nullptr}};
 
+    auto buffer = static_cast<const stbi_uc*>(data.data());
+    auto len = static_cast<int>(data.size());
+    int channels = 4;
+
     uint8_t* img;
     int w, h, n;
-    img =
-        (uint8_t*)stbi_load_from_memory((unsigned char*)&data[0], (int)data.size(), &w, &h, &n, 4);
+    img = stbi_load_from_memory(buffer, len, &w, &h, nullptr, channels);
 
     if (!img) {
         return image;
@@ -20,7 +23,7 @@ Image ResourceLoader::loadImage(std::span<const uint8_t> data) {
     image.info.width = w;
     image.info.height = h;
 
-    image.pixels.data = {img, (size_t)w * h * 4};
+    image.pixels.data = {img, static_cast<size_t>(w * h * channels)};
     image.pixels.stride = w * 4;
 
     image.data = {img, stbi_image_free};

@@ -41,8 +41,8 @@ class App {
     void onMouseButtonEvent(const SDL_Event* ev);
     void onMouseMotionEvent(const SDL_Event* ev);
 
-    SDL_Window* m_window;
-    SDL_Renderer* m_renderer;
+    SDL_Window* m_window = nullptr;
+    SDL_Renderer* m_renderer = nullptr;
     bool m_exit = false;
     bool m_error = false;
     bool m_needsRendering = true;

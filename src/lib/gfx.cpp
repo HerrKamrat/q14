@@ -154,7 +154,7 @@ void RenderContext::drawPolygon(int vertexCount,
 
         vertices[i].position.x = vertex.position.x;
         vertices[i].position.y = vertex.position.y;
-        vertices[i].color = {255, 255, 255, 255};
+        vertices[i].color = toFColor(vertex.color);
     }
 
     SDL_RenderGeometry(m_renderer, m_currentTexture.ptr, &vertices[0], 4, &indices[0], 6);
@@ -163,7 +163,6 @@ void RenderContext::drawPolygon(int vertexCount,
 Texture RenderContext::createTexture(ImageInfo info, PixelRef pixels, TextureOptions options) {
     auto texture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC,
                                      info.width, info.height);
-    SDL_Log("create texture %d, %d, %d", info.width, info.height, pixels.stride);
     if (texture == NULL) {
         return {{0, 0}, 0, 0};
     }

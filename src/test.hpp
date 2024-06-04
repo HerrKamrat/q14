@@ -8,5 +8,6 @@ class Test : public World {
     virtual void update(UpdateContext& context) override;
     virtual void render(RenderContext& context) override;
 
+    virtual void onResizeEvent(ResizeEvent& resize) override;
     virtual void onKeyboardEvent(KeyboardEvent& event) override;
 };
