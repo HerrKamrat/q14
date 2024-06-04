@@ -100,10 +100,10 @@ void Test::init(UpdateContext& updateContext, RenderContext& renderContext) {
 
     {
         b2WorldDef worldDef = b2DefaultWorldDef();
-        worldDef.gravity = (b2Vec2){0.0f, 10.0f};
+        worldDef.gravity = {0.0f, 10.0f};
         b2WorldId worldId = m_worldId = b2CreateWorld(&worldDef);
         b2BodyDef groundBodyDef = b2DefaultBodyDef();
-        groundBodyDef.position = (b2Vec2){32.0f, 64.0f};
+        groundBodyDef.position = {32.0f, 64.0f};
 
         b2BodyId groundId = b2CreateBody(worldId, &groundBodyDef);
 
@@ -119,7 +119,7 @@ void Test::init(UpdateContext& updateContext, RenderContext& renderContext) {
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
-        bodyDef.position = (b2Vec2){100.0f, 0.0f};
+        bodyDef.position = {100.0f, 0.0f};
 
         int cols = 10;
         int rows = 10;
