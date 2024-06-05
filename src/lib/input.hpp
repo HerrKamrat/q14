@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 struct AnalogInputValue {
     float value = 0;
