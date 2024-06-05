@@ -21,13 +21,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
         return SDL_Fail();
     }
 
-    {
-        SDL_Version version;
-        if (!SDL_GetVersion(&version)) {
-            SDL_Log("SDL: %d.%d.%d", version.major, version.minor, version.patch);
-        }
-    }
-
+    SDL_Log("SDL: %d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
     SDL_Log("GLM: %d.%d.%d", GLM_VERSION_MAJOR, GLM_VERSION_MINOR, GLM_VERSION_PATCH);
 
     {

@@ -1,5 +1,5 @@
 #pragma once
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "math.hpp"
 
@@ -91,8 +91,8 @@ class MouseMotionEvent : public Event {
 
 class EventListener {
   public:
-    virtual void onResizeEvent(ResizeEvent& resize){};
-    virtual void onKeyboardEvent(KeyboardEvent& event){};
-    virtual void onMouseButtonEvent(MouseButtonEvent& event){};
-    virtual void onMouseMotionEvent(MouseMotionEvent& event){};
+    virtual void onResizeEvent(ResizeEvent& resize) {};
+    virtual void onKeyboardEvent(KeyboardEvent& event) {};
+    virtual void onMouseButtonEvent(MouseButtonEvent& event) {};
+    virtual void onMouseMotionEvent(MouseMotionEvent& event) {};
 };

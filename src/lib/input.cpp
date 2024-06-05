@@ -1,6 +1,6 @@
 #include "input.hpp"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 // https://github.com/libsdl-org/SDL/blob/main/docs/README-migration.md#sdl_gamecontrollerh
 bool InputManager::init() {

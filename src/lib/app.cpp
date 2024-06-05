@@ -16,7 +16,7 @@ void App::init() {
         return;
     }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
     if (!renderer) {
         SDL_DestroyWindow(window);
         m_error = true;
@@ -26,10 +26,13 @@ void App::init() {
     SDL_ShowWindow(window);
 
     {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(renderer, &info);
-        SDL_Log("Renderer: %s", info.name);
-        SDL_Log("Max texture size: %d x %d", info.max_texture_width, info.max_texture_height);
+        auto name = SDL_GetRendererName(renderer);
+        if (name) {
+            SDL_Log("Renderer: %s", name);
+        }
+        auto max_texture_size = SDL_GetNumberProperty(SDL_GetRendererProperties(renderer),
+                                                      SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
+        SDL_Log("Max texture size: %d x %d", max_texture_size, max_texture_size);
     }
 
     int width, height, bbwidth, bbheight;
