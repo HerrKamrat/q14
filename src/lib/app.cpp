@@ -30,8 +30,8 @@ void App::init() {
         if (name) {
             SDL_Log("Renderer: %s", name);
         }
-        auto max_texture_size = SDL_GetNumberProperty(SDL_GetRendererProperties(renderer),
-                                                      SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
+        int max_texture_size = SDL_GetNumberProperty(SDL_GetRendererProperties(renderer),
+                                                     SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
         SDL_Log("Max texture size: %d x %d", max_texture_size, max_texture_size);
     }
 
@@ -76,30 +76,10 @@ void App::event(const SDL_Event* event) {
     }
 
     switch (event->type) {
-        case SDL_EVENT_WINDOW_RESIZED: {
-            SDL_Log("SDL_EVENT_WINDOW_RESIZED %d x %d", event->window.data1, event->window.data2);
-            break;
-        }
-
         case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-            SDL_Log("SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED %d x %d", event->window.data1,
-                    event->window.data2);
             onResizeEvent(event);
-
             break;
         }
-
-        case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED: {
-            SDL_Log("SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED %d x %d", event->window.data1,
-                    event->window.data2);
-            break;
-        }
-
-        case SDL_EVENT_WINDOW_DISPLAY_CHANGED: {
-            SDL_Log("SDL_EVENT_WINDOW_DISPLAY_CHANGED %d", event->window.data1);
-            break;
-        }
-
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP: {
             onKeyEvent(event);

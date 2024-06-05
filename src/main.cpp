@@ -6,9 +6,7 @@
 
 #include "lib.hpp"
 
-// #include "game.hpp"
-#include "resources.hpp"
-#include "test.hpp"
+#include "game.hpp"
 
 int SDL_Fail() {
     SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error %s", SDL_GetError());
@@ -36,7 +34,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     *appstate = app;
     app->init();
 
-    app->setWorld(std::make_unique<Test>());
+    app->setWorld(std::make_unique<PhysicsWorld>());
 
     SDL_Log("Application started successfully!");
     return app->status();

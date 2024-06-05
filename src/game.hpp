@@ -2,7 +2,7 @@
 
 #include "lib.hpp"
 
-class Test : public World {
+class PhysicsWorld : public World {
   public:
     virtual void init(UpdateContext& updateContext, RenderContext& renderContext) override;
     virtual void update(UpdateContext& context) override;
