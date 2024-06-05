@@ -25,7 +25,7 @@ jobs:
             uses: actions/upload-artifact@v4
             if: ${{ matrix.target != 'WindowsStore' }}
             with:
-                name: sdl-min-${{ matrix.target }}-${{ matrix.arch }}
+                name: q14-${{ matrix.target }}-${{ matrix.arch }}
                 path: |
                     build/Release/*.exe
                     build/Release/*.dll
