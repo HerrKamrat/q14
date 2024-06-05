@@ -98,11 +98,12 @@ class RenderContext {
         return m_frameCount;
     }
 
-    // TODO: tmp
+    [[deprecated]]
     SDL_Renderer* getRenderer() {
         return m_renderer;
     }
 
+    [[deprecated]]
     SDL_Texture* getTexture() {
         return m_currentTexture.ptr;
     }

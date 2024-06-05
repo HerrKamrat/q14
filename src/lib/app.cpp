@@ -8,9 +8,9 @@ App::App() : m_renderContext(nullptr), m_world(std::make_unique<World>()) {
 App::~App() {
 }
 
-void App::init() {
-    SDL_Window* window =
-        SDL_CreateWindow(version(), 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+void App::init(AppConfig config) {
+    SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+    SDL_Window* window = SDL_CreateWindow(config.name, config.width, config.height, flags);
     if (!window) {
         m_error = true;
         return;
@@ -47,6 +47,7 @@ void App::init() {
     m_window = window;
     m_renderer = renderer;
     m_size = {(float)bbwidth, (float)bbheight};
+    m_clearColor = config.clearColor;
 
     m_updateContext.setTicks(SDL_GetTicks());
     m_renderContext = {m_renderer};
@@ -72,7 +73,8 @@ void App::event(const SDL_Event* event) {
 #endif
 
     if (m_inputManager.handleEvent(event)) {
-        return;
+        // TODO: is this correct behaviour?
+        // return;
     }
 
     switch (event->type) {
@@ -127,7 +129,7 @@ void App::render() {
         return;
     }
     m_needsRendering = false;
-    m_renderContext.clear(Colors::BLACK);
+    m_renderContext.clear();
 
     m_world->render(m_renderContext);
 

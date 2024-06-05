@@ -41,6 +41,21 @@ class ResizeEvent : public Event {
 class KeyboardEvent : public Event {
   public:
     using Event::Event;
+    bool pressed() const {
+        return event().state == SDL_PRESSED;
+    }
+
+    bool released() const {
+        return !pressed();
+    }
+
+    char keycode() const {
+        return event().keysym.sym;
+    }
+
+    bool keycode(char keycode) const {
+        return this->keycode() == keycode;
+    }
 
   protected:
   private:

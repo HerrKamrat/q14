@@ -10,12 +10,19 @@ std::unique_ptr<World> createWorld(Size size,
                                    UpdateContext& updateContext,
                                    RenderContext& renderContext);
 
+struct AppConfig {
+    const char* name{nullptr};
+    int width{640};
+    int height{480};
+    Color clearColor{Colors::WHITE};
+};
+
 class App {
   public:
     App();
     ~App();
 
-    void init();
+    void init(AppConfig config = AppConfig());
     void event(const SDL_Event*);
     void update();
     void render();
@@ -47,6 +54,7 @@ class App {
     bool m_error = false;
     bool m_needsRendering = true;
     Size m_size;
+    Color m_clearColor = Colors::BLACK;
     UpdateContext m_updateContext;
     RenderContext m_renderContext;
 

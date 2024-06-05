@@ -93,7 +93,7 @@ void RenderContext::drawTexture(const Rect& rect, const Rect& uvRect, const Mat3
     auto c2 = m * glm::vec3(rect.left(), rect.bottom(), 1);
     auto c3 = m * glm::vec3(rect.right(), rect.bottom(), 1);
 
-    SDL_FColor c = toFColor(m_currentColor);
+    auto c = toFColor(m_currentColor);
     vertices[0].position = {c0.x, c0.y};
     vertices[0].tex_coord = {t.left(), t.top()};
     vertices[0].color = c;
@@ -142,6 +142,9 @@ void RenderContext::drawLine(Vec2 p0, Vec2 p1) {
 void RenderContext::drawPolygon(int vertexCount,
                                 bool outline,
                                 std::function<void(Vertex&, int)> callback) {
+    // TODO: this should work with an arbitrary number of vertices
+    SDL_assert(vertexCount == 4);
+
     const int indices[6] = {0, 1, 2, 2, 3, 0};
     std::vector<SDL_Vertex> vertices;
     vertices.resize(vertexCount);

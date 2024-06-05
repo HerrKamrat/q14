@@ -21,7 +21,6 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
     SDL_Log("SDL: %d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
     SDL_Log("GLM: %d.%d.%d", GLM_VERSION_MAJOR, GLM_VERSION_MINOR, GLM_VERSION_PATCH);
-
     {
         auto version = b2GetVersion();
         SDL_Log("Box2c: %d.%d.%d", version.major, version.minor, version.revision);
@@ -30,9 +29,12 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     std::srand(std::time(NULL));
 
     // set up the application data
+    AppConfig config;
+    config.name = version();
+    config.clearColor = Colors::BLACK;
     auto app = new App();
     *appstate = app;
-    app->init();
+    app->init(config);
 
     app->setWorld(std::make_unique<PhysicsWorld>());
 
