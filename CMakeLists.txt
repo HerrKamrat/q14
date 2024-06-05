@@ -75,6 +75,9 @@ if(CMAKE_SYSTEM_NAME MATCHES Emscripten)
     set(CMAKE_EXECUTABLE_SUFFIX ".html" CACHE INTERNAL "")
 endif()
 
+# use C++11
+target_compile_features(${EXECUTABLE_NAME} PUBLIC cxx_std_20)
+
 # If targeting Windows UWP, enable Windows Runtime Compilation
 # if using a C++ version older than C++20, you also need /ZW
 if(WINDOWS_STORE)
