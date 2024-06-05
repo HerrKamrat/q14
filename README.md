@@ -1,5 +1,9 @@
 # Q14
 
+![Build](https://github.com/HerrKamrat/q14/actions/workflows/build.yml/badge.svg)
+![Web Build](https://github.com/HerrKamrat/q14/actions/workflows/web-build.yml/badge.svg)
+![Android Build](https://github.com/HerrKamrat/q14/actions/workflows/android-build.yml/badge.svg)
+
 ## SDL3 App From Source Minimal Example
 
 This is a minimal example for building and using SDL3 from source
