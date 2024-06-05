@@ -19,7 +19,6 @@ bool InputManager::handleEvent(const SDL_Event* event) {
     switch (event->type) {
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP: {
-            // SDL_Log("key: %d %d", event->key.keysym.scancode, event->key.state);
             switch (event->key.keysym.scancode) {
                 case SDL_SCANCODE_W:
                     m_state.up.value = event->key.state;

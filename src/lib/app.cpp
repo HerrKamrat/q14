@@ -125,7 +125,8 @@ void App::update() {
     auto currentTicks = SDL_GetTicks();
     auto lastTicks = m_updateContext.getTicks();
     auto delta = currentTicks - lastTicks;
-    int iterations = delta / updateTicks;
+    // TODO: fix this for real
+    int iterations = 1;  // delta / updateTicks;
 
     if (iterations <= 0) {
         return;

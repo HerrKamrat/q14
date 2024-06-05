@@ -4,7 +4,7 @@
 #include <box2d/box2d.h>
 
 void DrawPolygonFcn(const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context) {
-    SDL_Log("%s, vertexCount: %d", __FUNCTION__, vertexCount);
+    // SDL_Log("%s, vertexCount: %d", __FUNCTION__, vertexCount);
     // static_cast<RenderContext*>(context)->DrawPolygon(vertices, vertexCount, color);
 }
 
@@ -95,7 +95,7 @@ class Player : public Node {
 };
 
 void Test::init(UpdateContext& updateContext, RenderContext& renderContext) {
-    auto img = ResourceLoader::loadImage(Resources::Images::Tiles::Small);
+    auto img = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0009);
     auto tex = renderContext.createTexture(img.info, img.pixels);
 
     {
@@ -211,7 +211,7 @@ void Test::update(UpdateContext& context) {
     {
         float timeStep = 1.0f / 60.0f;
         int subStepCount = 4;
-        b2World_Step(m_worldId, timeStep, subStepCount);
+        b2World_Step(m_worldId, context.getDeltaTime(), subStepCount);
 
         for (auto& event : getBodyEvents(m_worldId)) {
             if (event.userData) {
