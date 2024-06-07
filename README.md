@@ -4,58 +4,33 @@
 ![Web Build](https://github.com/HerrKamrat/q14/actions/workflows/web-build.yml/badge.svg)
 ![Android Build](https://github.com/HerrKamrat/q14/actions/workflows/android-build.yml/badge.svg)
 
-## SDL3 App From Source Minimal Example
+A simple toy project for improving my coding skills, learn more about CI/CD, playing around with new technologies, and having fun!
 
-This is a minimal example for building and using SDL3 from source
-using C++ and CMake. It also demonstrates setting up things like macOS/iOS
-bundles.
-See `src/main.cpp` for the code.
+Goal: create a tiny and easy to use game engine, for quick prototyping of simple games
 
-### Building And Running
+## TODO
 
-First install your compiler of choice and CMake. Then, follow the commands below:
+- [ ] Physic system
+- [ ] Player input
+- [ ] Refactoring and clean up of the node/world system, and memory handling
+- [ ] Virtual gamepad for Mobile and Mobile Browsers
+- [ ] Resource Management
+  - [ ] Resource Cache
+  - [ ] Dynamic Texture Atlas
+  - [?] File API
+  - [?] Replace STBI
+- [ ] Sound system
+- [ ] Network API - http requests
+- [ ] Network API - client/server
+- [?] Scripting language
 
-```sh
-# You need to clone with submodules, otherwise SDL will not download.
-git clone https://github.com/Ravbug/sdl3-sample --depth=1 --recurse-submodules
-cd sdl3-sample
-mkdir build
-cd build
-cmake ..
-```
+## Contribution
 
-You can also use an init script inside `config/`. Then open the IDE project inside `build/`
-(If you had CMake generate one) and run!
+Project structure based on [Ravbugs SDL3-sample](https://github.com/Ravbug/sdl3-sample) using:
 
-## Supported Platforms
+- [Box2c](https://box2d.org/documentation_v3/)
+- [GLM](https://github.com/g-truc/glm)
+- [SDL3](https://libsdl.org/)
+- [stb_image](https://github.com/nothings/stb)
 
-I have tested the following:
-
-- macOS
-- iOS
-- tvOS
-- visionOS
-- Windows
-- Linux
-- UWP
-- Web browsers (via Emscripten)\*
-- Android\*
-
-\*See further instructions in `config/`
-
-## Updating SDL
-
-Just update the submodule:
-
-```sh
-cd SDL
-git pull
-```
-
-You don't need to use a submodule, you can also copy the source in directly. This
-repository uses a submodule to keep its size to a minimum. Note that as of writing, SDL3 is
-in development, so expect APIs to change.
-
-## Reporting issues
-
-Is something not working? Create an Issue or send a Pull Request on this repository!
+Most artwork is from, or based on artwork from, [Kenney.nl](https://www.kenney.nl/)
