@@ -8,6 +8,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 # prevent installing to system directories.
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE INTERNAL "")
 
+
 # Declare the project
 project(q14 VERSION 0.0.3)
 add_compile_definitions(VERSION="${CMAKE_PROJECT_VERSION}")
@@ -27,6 +28,7 @@ else()
 endif()
 
 
+
 add_compile_definitions(FULL_VERSION_STRING="${PROJECT_FULL_VERSION_STRING}")
 
 # Create an executable or a shared library based on the platform and add our sources to it
@@ -41,6 +43,15 @@ endif()
 set_property(TARGET ${EXECUTABLE_NAME} PROPERTY CXX_STANDARD 20)
 set_property(TARGET ${EXECUTABLE_NAME} PROPERTY CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${EXECUTABLE_NAME} PROPERTY CMAKE_CXX_EXTENSIONS OFF)
+set_property(TARGET ${EXECUTABLE_NAME} PROPERTY COMPILE_WARNING_AS_ERROR ON)
+
+if(MSVC)
+  # TODO: test this
+  # target_compile_options(${EXECUTABLE_NAME} PRIVATE /W4)
+else()
+  target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-function)
+endif()
+
 
 file(GLOB_RECURSE SRC_FILES
      "src/**.hpp"

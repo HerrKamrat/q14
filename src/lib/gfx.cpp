@@ -187,9 +187,9 @@ Texture RenderContext::createTexture(ImageInfo info, PixelRef pixels, TextureOpt
             obj = &*it;
         } else {
             Texture::Id key = {0, 0};
-            key.index = m_textures.size();
+            key.index = static_cast<uint16_t>(m_textures.size());
 
-            m_textures.push_back({key});
+            m_textures.push_back({key, nullptr, {0, 0, 0, 0}});
             obj = &m_textures.back();
         }
     }

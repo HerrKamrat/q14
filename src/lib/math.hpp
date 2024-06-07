@@ -89,7 +89,8 @@ class Transform {
     }
 
   private:
-    Mat3 m_matrix;
+    // TODO: cache matrix
+    // Mat3 m_matrix;
 
     Vec2 m_position{0, 0};
     Vec2 m_scale{1, 1};

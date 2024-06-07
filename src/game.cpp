@@ -5,7 +5,7 @@
 #include "lib/box2d_debug.hpp"
 #include "resources.hpp"
 namespace {
-constexpr int kPlayerTag = 1;
+// constexpr int kPlayerTag = 1;
 Transform m_cameraTransform;
 
 b2WorldId m_worldId;
@@ -34,7 +34,7 @@ std::unique_ptr<Node> createStaticObject(Texture tex, Vec2 position) {
     b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
     ptr->setPosition(position);
 
-    return std::move(node);
+    return node;
 }
 
 std::unique_ptr<Node> createDynamicObject(Texture tex, Vec2 position) {
@@ -58,7 +58,7 @@ std::unique_ptr<Node> createDynamicObject(Texture tex, Vec2 position) {
     b2BodyId bodyId = b2CreateBody(m_worldId, &bodyDef);
     b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
 
-    return std::move(node);
+    return node;
 }
 
 void PhysicsWorld::init(UpdateContext& updateContext, RenderContext& renderContext) {
@@ -82,7 +82,7 @@ void PhysicsWorld::init(UpdateContext& updateContext, RenderContext& renderConte
     {
         b2WorldDef worldDef = b2DefaultWorldDef();
         worldDef.gravity = {0.0f, 10.0f};
-        b2WorldId worldId = m_worldId = b2CreateWorld(&worldDef);
+        m_worldId = b2CreateWorld(&worldDef);
 
         addNode(createStaticObject(tex2, Vec2{0 + 0.5f, 31.0f + 0.5f}));
         for (int i = 1; i < 31; i++) {
@@ -150,7 +150,6 @@ void PhysicsWorld::update(UpdateContext& context) {
 
     // Update physics
     {
-        float timeStep = 1.0f / 60.0f;
         int subStepCount = 4;
         b2World_Step(m_worldId, context.getDeltaTime(), subStepCount);
 
@@ -165,27 +164,27 @@ void PhysicsWorld::update(UpdateContext& context) {
                 // static_cast<BodyMovementListener*>(event.userData)->onBodyMoved(p, r);
             }
         }
-        for (auto& event : getBeginTouchEvents(m_worldId)) {
-            auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
-            auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
+        // for (auto& event : getBeginTouchEvents(m_worldId)) {
+        //     auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
+        //     auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
 
-            // static_cast<ContactListener*>(userDataA)->onContactBegin(???);
-            // static_cast<ContactListener*>(userDataB)->onContactBegin(???);
-        }
-        for (auto& event : getEndTouchEvents(m_worldId)) {
-            auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
-            auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
+        //     static_cast<ContactListener*>(userDataA)->onContactBegin(???);
+        //     static_cast<ContactListener*>(userDataB)->onContactBegin(???);
+        // }
+        // for (auto& event : getEndTouchEvents(m_worldId)) {
+        //     auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
+        //     auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
 
-            // static_cast<ContactListener*>(userDataA)->onContactBegin(???);
-            // static_cast<ContactListener*>(userDataB)->onContactBegin(???);
-        }
-        for (auto& event : getHitEvents(m_worldId)) {
-            auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
-            auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
+        //     static_cast<ContactListener*>(userDataA)->onContactBegin(???);
+        //     static_cast<ContactListener*>(userDataB)->onContactBegin(???);
+        // }
+        // for (auto& event : getHitEvents(m_worldId)) {
+        //     auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
+        //     auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
 
-            // static_cast<ContactListener*>(userDataA)->onContactBegin(???);
-            // static_cast<ContactListener*>(userDataB)->onContactBegin(???);
-        }
+        //     static_cast<ContactListener*>(userDataA)->onContactBegin(???);
+        //     static_cast<ContactListener*>(userDataB)->onContactBegin(???);
+        // }
     }
 
     // Handle input

@@ -13,7 +13,6 @@ void DrawSolidPolygonFcn(b2Transform transform,
                          float radius,
                          b2HexColor color,
                          void* context) {
-    const Vec2* v = reinterpret_cast<const Vec2*>(vertices);
     Color c = Color::fromIntRGB(color);
     static_cast<RenderContext*>(context)->drawPolygon(4, true, [&](Vertex& vertex, int index) {
         auto p = b2TransformPoint(transform, vertices[index]);

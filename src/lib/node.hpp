@@ -43,6 +43,7 @@ class Node;
 
 class World : public EventListener {
   public:
+    virtual ~World() = default;
     virtual void init(UpdateContext& updateContext, RenderContext& renderContext) {};
     virtual void update(UpdateContext& context);
     virtual void render(RenderContext& context);
@@ -72,6 +73,7 @@ class World : public EventListener {
 
 class Node : public EventListener {
   public:
+    virtual ~Node() = default;
     void initWithTextureRect(TextureRect textureRect);
     // TEMP: made virtual for testing
     virtual void update(UpdateContext& context);
@@ -216,7 +218,7 @@ class Node : public EventListener {
         if (it != m_children.end()) {
             auto r = std::move(*it);
             m_children.erase(it);
-            return std::move(r);
+            return r;
         }
 
         return {};

@@ -13,7 +13,7 @@ Image ResourceLoader::loadImage(std::span<const uint8_t> data) {
     int channels = 4;
 
     uint8_t* img;
-    int w, h, n;
+    int w, h;
     img = stbi_load_from_memory(buffer, len, &w, &h, nullptr, channels);
 
     if (!img) {

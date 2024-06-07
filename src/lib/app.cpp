@@ -30,8 +30,8 @@ void App::init(AppConfig config) {
         if (name) {
             SDL_Log("Renderer: %s", name);
         }
-        int max_texture_size = SDL_GetNumberProperty(SDL_GetRendererProperties(renderer),
-                                                     SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
+        int max_texture_size = static_cast<int>(SDL_GetNumberProperty(
+            SDL_GetRendererProperties(renderer), SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0));
         SDL_Log("Max texture size: %d x %d", max_texture_size, max_texture_size);
     }
 
@@ -101,12 +101,12 @@ void App::event(const SDL_Event* event) {
 
 void App::update() {
     const double updateRate = 1.0 / 60.0;
-    const uint64_t updateTicks = updateRate * 1000;
+    const uint64_t updateTicks = static_cast<uint64_t>(updateRate * 1000);
     const int maxIterations = 5;
 
-    auto currentTicks = SDL_GetTicks();
+    // auto currentTicks = SDL_GetTicks();
     auto lastTicks = m_updateContext.getTicks();
-    auto delta = currentTicks - lastTicks;
+    // auto delta = currentTicks - lastTicks;
     // TODO: fix this for real
     int iterations = 1;  // delta / updateTicks;
 
