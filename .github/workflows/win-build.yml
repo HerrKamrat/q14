@@ -1,0 +1,31 @@
+name: Build For Windows
+on: [push, pull_request]
+
+jobs:
+  build-win:
+    name: Build app for Windows
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64]
+        target: [Windows, WindowsStore]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Configure
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_SYSTEM_NAME=${{ matrix.target }} -DCMAKE_SYSTEM_VERSION="10.0" -A${{ matrix.arch }} ..
+      - name: Build
+        run: cmake --build build --target q14 --config Release
+      - name: Upload Build
+        uses: actions/upload-artifact@v4
+        if: ${{ matrix.target != 'WindowsStore' }}
+        with:
+          name: q14-${{ matrix.target }}-${{ matrix.arch }}
+          path: |
+            build/Release/*.exe
+            build/Release/*.dll

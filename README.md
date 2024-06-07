@@ -1,7 +1,8 @@
 # Q14
 
-![Build](https://github.com/HerrKamrat/q14/actions/workflows/build.yml/badge.svg)
-![Web Build](https://github.com/HerrKamrat/q14/actions/workflows/web-build.yml/badge.svg)
+![Windows](https://github.com/HerrKamrat/q14/actions/workflows/win-build.yml/badge.svg)
+![Apple](https://github.com/HerrKamrat/q14/actions/workflows/apple-build.yml/badge.svg)
+![Web](https://github.com/HerrKamrat/q14/actions/workflows/web-build.yml/badge.svg)
 ![Android Build](https://github.com/HerrKamrat/q14/actions/workflows/android-build.yml/badge.svg)
 
 A simple toy project for improving my coding skills, learn more about CI/CD, playing around with new technologies, and having fun!
