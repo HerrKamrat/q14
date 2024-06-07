@@ -56,7 +56,7 @@ jobs:
           - name: Create DMG
             run: |
                 cd build
-                hdiutil create -size 2g -srcfolder release -volname sdl_min_apple_${{ matrix.target }} sdl_min_apple_${{ matrix.target }}.dmg
+                hdiutil create -size 2g -srcfolder release -volname q14_apple_${{ matrix.target }} q14_apple_${{ matrix.target }}.dmg
           - name: Upload Build
             uses: actions/upload-artifact@v4
             with:

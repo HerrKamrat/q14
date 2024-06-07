@@ -26,7 +26,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
         SDL_Log("Box2c: %d.%d.%d", version.major, version.minor, version.revision);
     }
 
-    std::srand(std::time(NULL));
+    std::srand(static_cast<unsigned int>(std::time(NULL)));
 
     // set up the application data
     AppConfig config;
