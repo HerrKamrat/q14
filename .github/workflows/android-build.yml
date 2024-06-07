@@ -1,6 +1,9 @@
 name: Build For Android
-
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   apk:
@@ -13,17 +16,17 @@ jobs:
           submodules: true
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Update the build.gradle
-        run:  |
-               cp build.gradle SDL/android-project/app/
+        run: |
+          cp build.gradle SDL/android-project/app/
 
       - name: Build the APK
         run: |
-              cd SDL/android-project/
-              ./gradlew assembleDebug
+          cd SDL/android-project/
+          ./gradlew assembleDebug
 
       - name: Upload the APK
         uses: actions/upload-artifact@v3
