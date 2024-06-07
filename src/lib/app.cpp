@@ -129,7 +129,7 @@ void App::render() {
         return;
     }
     m_needsRendering = false;
-    m_renderContext.clear();
+    m_renderContext.clear(m_clearColor);
 
     m_world->render(m_renderContext);
 

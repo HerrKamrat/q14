@@ -31,7 +31,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
     // set up the application data
     AppConfig config;
     config.name = version();
-    config.clearColor = Colors::BLACK;
+    config.clearColor = {194, 227, 232, 255};
     auto app = new App();
     *appstate = app;
     app->init(config);

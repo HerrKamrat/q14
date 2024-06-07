@@ -15,54 +15,113 @@ b2BodyId m_bodyId;
 
 };  // namespace
 
-void PhysicsWorld::init(UpdateContext& updateContext, RenderContext& renderContext) {
-    auto img = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0009);
-    auto tex = renderContext.createTexture(img.info, img.pixels);
+std::unique_ptr<Node> createStaticObject(Texture tex, Vec2 position) {
+    auto node = std::make_unique<Node>();
+    node->setTexture(tex);
+    node->setOrigin({-0.5f, -0.5});
+    node->setSize({1, 1});
+    Node* ptr = node.get();
 
+    b2BodyDef groundBodyDef = b2DefaultBodyDef();
+    groundBodyDef.position = {position.x, position.y};
+
+    b2BodyId groundId = b2CreateBody(m_worldId, &groundBodyDef);
+
+    b2Polygon groundBox = b2MakeBox(0.5f, 0.5f);
+
+    b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+    groundShapeDef.userData = ptr;
+    b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
+    ptr->setPosition(position);
+
+    return std::move(node);
+}
+
+std::unique_ptr<Node> createDynamicObject(Texture tex, Vec2 position) {
+    auto node = std::make_unique<Node>();
+    node->setTexture(tex);
+    node->setOrigin({-0.5f, -0.5});
+    node->setSize({1, 1});
+    Node* ptr = node.get();
+    ptr->setPosition(position);
+
+    b2Polygon dynamicBox = b2MakeBox(0.5f, 0.5f);
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    shapeDef.density = 1.0f;
+    shapeDef.friction = 0.3f;
+
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.position = {position.x, position.y};
+
+    bodyDef.userData = ptr;
+    b2BodyId bodyId = b2CreateBody(m_worldId, &bodyDef);
+    b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
+
+    return std::move(node);
+}
+
+void PhysicsWorld::init(UpdateContext& updateContext, RenderContext& renderContext) {
+    auto img1 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0009);
+    auto tex1 = renderContext.createTexture(img1.info, img1.pixels);
+
+    auto img2 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0001);
+    auto tex2 = renderContext.createTexture(img2.info, img2.pixels);
+
+    auto img3 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0002);
+    auto tex3 = renderContext.createTexture(img3.info, img3.pixels);
+
+    auto img4 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0003);
+    auto tex4 = renderContext.createTexture(img4.info, img4.pixels);
+
+    auto img5 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0026);
+    auto tex5 = renderContext.createTexture(img5.info, img5.pixels);
+
+    auto img6 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0000);
+    auto tex6 = renderContext.createTexture(img6.info, img6.pixels);
     {
         b2WorldDef worldDef = b2DefaultWorldDef();
         worldDef.gravity = {0.0f, 10.0f};
         b2WorldId worldId = m_worldId = b2CreateWorld(&worldDef);
-        b2BodyDef groundBodyDef = b2DefaultBodyDef();
-        groundBodyDef.position = {32.0f, 64.0f};
 
-        b2BodyId groundId = b2CreateBody(worldId, &groundBodyDef);
+        addNode(createStaticObject(tex2, Vec2{0 + 0.5f, 31.0f + 0.5f}));
+        for (int i = 1; i < 31; i++) {
+            addNode(createStaticObject(tex3, Vec2{i + 0.5f, 31.0f + 0.5f}));
+        }
+        addNode(createStaticObject(tex4, Vec2{31 + 0.5f, 31.0f + 0.5f}));
 
-        b2Polygon groundBox = b2MakeBox(32.0f, 1.0f);
+        int cols = 10;
+        int rows = 10;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols - i; j++) {
+                addNode(createDynamicObject(tex1, Vec2{j + 0.5f + i * 0.5f, 30 - i + 0.5f}));
+            }
+        }
+        addNode(createDynamicObject(tex5, Vec2{21 + 0.5f, 15 + 0.5f}));
+    }
 
-        b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-        b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
+    {
+        Vec2 position{15 + 0.5f, 30 + 0.5f};
+        auto node = std::make_unique<Node>();
+        node->setTexture(tex6);
+        node->setOrigin({-0.5f, -0.5});
+        node->setSize({1, 1});
+        Node* ptr = node.get();
+        ptr->setPosition(position);
 
-        b2Polygon dynamicBox = b2MakeBox(1.0f, 1.0f);
+        b2Polygon dynamicBox = b2MakeBox(0.5f, 0.5f);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         shapeDef.density = 1.0f;
         shapeDef.friction = 0.3f;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
-        bodyDef.position = {100.0f, 0.0f};
+        bodyDef.position = {position.x, position.y};
 
-        int cols = 10;
-        int rows = 10;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols - i; j++) {
-                auto node = std::make_unique<Node>();
-                node->setTexture(tex);
-                node->setOrigin({-1, -1});
-                node->setSize({2, 2});
-                Node* ptr = node.get();
-                addNode(std::move(node));
-
-                bodyDef.userData = ptr;
-                bodyDef.position.x = 32 - 5 + j * 2.25f + i * 1.125f;
-                bodyDef.position.y = 10 - i * 2.25f;
-                b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
-                b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
-                bodyDef.userData = nullptr;
-
-                m_bodyId = bodyId;
-            }
-        }
+        bodyDef.userData = ptr;
+        b2BodyId bodyId = m_bodyId = b2CreateBody(m_worldId, &bodyDef);
+        b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
+        addNode(std::move(node));
     }
 }
 
@@ -134,19 +193,19 @@ void PhysicsWorld::update(UpdateContext& context) {
         const auto input = context.getInputState();
         if (input.left.active()) {
             SDL_Log("left");
-            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {-10, 0}, true);
+            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {-1, 0}, true);
         }
         if (input.right.active()) {
             SDL_Log("right");
-            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {10, 0}, true);
+            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {1, 0}, true);
         }
         if (input.up.active()) {
             SDL_Log("up");
-            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {0, -10}, true);
+            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {0, -1}, true);
         }
         if (input.down.active()) {
             SDL_Log("down");
-            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {0, 10}, true);
+            b2Body_ApplyLinearImpulseToCenter(m_bodyId, {0, 1}, true);
         }
         if (input.primaryAction.active()) {
             SDL_Log("primaryAction");
@@ -167,7 +226,7 @@ void PhysicsWorld::render(RenderContext& context) {
 };
 
 void PhysicsWorld::onResizeEvent(ResizeEvent& resize) {
-    Size targetSize{64, 64};
+    Size targetSize{32, 32};
     auto windowSize = resize.size();
     auto sizeDiff = windowSize / targetSize;
     auto scale = std::min(sizeDiff.x, sizeDiff.y);
