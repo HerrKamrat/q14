@@ -10,6 +10,7 @@ Goal: create a tiny and easy to use game engine, for quick prototyping of simple
 
 ## TODO
 
+- [ ] Enable strict warnings/errors
 - [ ] Physic system
 - [ ] Player input
 - [ ] Refactoring and clean up of the node/world system, and memory handling
