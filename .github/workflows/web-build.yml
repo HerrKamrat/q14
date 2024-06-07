@@ -1,4 +1,4 @@
-name: Build For Web
+name: Web
 on:
   push:
     branches: [main]

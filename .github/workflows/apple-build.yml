@@ -1,4 +1,4 @@
-name: Build For Apple
+name: macOS/iOS
 on:
   push:
     branches: [main]
