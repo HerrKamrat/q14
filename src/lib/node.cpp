@@ -61,16 +61,18 @@ void Node::render(RenderContext& context) {
     // context.setTexture(nullptr);
     // context.drawRect(visualRect());
     // context.drawRect(m_contentRect);
+    // TODO: fix this
+    if (getTexture().key.check > 0) {
+        context.setColor(m_color);
+        context.setTexture(getTexture());
+        // context.drawTexture(visualRect(), m_textureRect.bounds, m_angle);
 
-    context.setColor(m_color);
-    context.setTexture(getTexture());
-    // context.drawTexture(visualRect(), m_textureRect.bounds, m_angle);
-
-    // const Rect& rect,
-    // const TextureRect& textureRect,
-    // const glm::mat3x3& matri
-    context.drawTexture(getContentRect(), getTextureRect().normalizedBounds(),
-                        getGlobalTransform());
+        // const Rect& rect,
+        // const TextureRect& textureRect,
+        // const glm::mat3x3& matri
+        context.drawTexture(getContentRect(), getTextureRect().normalizedBounds(),
+                            getGlobalTransform());
+    }
     // context.setColor({125, 255, 0});
     // context.drawRect(getContentRect(), true);
     // context.setColor({0, 125, 255});
