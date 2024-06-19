@@ -166,13 +166,13 @@ class Node : public EventListener {
     }
 
     void setScaleX(float scale) {
-        // m_transform.setScaleX(scale);
+        m_transform.setScaleX(scale);
     }
     float getScaleX() {
         return m_transform.getScale().x;
     }
     void setScaleY(float scale) {
-        // m_transform.setScaleY(scale);
+        m_transform.setScaleY(scale);
     }
     float getScaleY() {
         return getScale().y;

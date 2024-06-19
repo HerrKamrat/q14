@@ -9,11 +9,22 @@ App::~App() {
 }
 
 void App::init(AppConfig config) {
-    SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+    SDL_WindowFlags flags =
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_BORDERLESS;
     SDL_Window* window = SDL_CreateWindow(config.name, config.width, config.height, flags);
     if (!window) {
         m_error = true;
         return;
+    }
+
+    if (config.width <= 0 || config.height <= 0) {
+        auto display = SDL_GetDisplayForWindow(window);
+        SDL_Rect bounds;
+        if (!SDL_GetDisplayUsableBounds(display, &bounds)) {
+            float f = 1.0;
+            SDL_SetWindowSize(window, bounds.w * f, bounds.h * f);
+            SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        }
     }
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);

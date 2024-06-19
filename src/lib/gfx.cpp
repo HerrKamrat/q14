@@ -130,9 +130,17 @@ void RenderContext::drawTexture(SDL_FRect* src,
                              flip);
 }
 
-void RenderContext::drawPoint(Vec2 point) {
-    auto p = reinterpret_cast<SDL_FPoint*>(&point);
-    SDL_RenderPoints(m_renderer, p, 1);
+void RenderContext::drawPoint(Vec2 point, float size) {
+    Vec2 tp = m_transform.transform(point - 0.5f / size) / size;
+    auto p = reinterpret_cast<SDL_FPoint*>(&tp);
+
+    if (size != 1.0f) {
+        SDL_SetRenderScale(m_renderer, size, size);
+        SDL_RenderPoints(m_renderer, p, 1);
+        SDL_SetRenderScale(m_renderer, 1.0f, 1.0f);
+    } else {
+        SDL_RenderPoints(m_renderer, p, 1);
+    }
 }
 
 void RenderContext::drawLine(Vec2 p0, Vec2 p1) {

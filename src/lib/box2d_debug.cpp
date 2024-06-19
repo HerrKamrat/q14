@@ -13,7 +13,10 @@ void DrawSolidPolygonFcn(b2Transform transform,
                          float radius,
                          b2HexColor color,
                          void* context) {
+    // SDL_Log("%s, vertexCount: %d, radius: %f", __FUNCTION__, vertexCount, radius);
+
     Color c = Color::fromIntRGB(color);
+    c.a = 125;
     static_cast<RenderContext*>(context)->drawPolygon(4, true, [&](Vertex& vertex, int index) {
         auto p = b2TransformPoint(transform, vertices[index]);
         vertex.position.x = p.x;
@@ -53,8 +56,10 @@ void DrawTransformFcn(b2Transform transform, void* context) {
 }
 
 void DrawPointFcn(b2Vec2 p, float size, b2HexColor color, void* context) {
-    SDL_Log("%s", __FUNCTION__);
-    // static_cast<RenderContext*>(context)->DrawPoint(p, size, color);
+    // SDL_Log("%s", __FUNCTION__);
+    auto renderer = static_cast<RenderContext*>(context);
+    renderer->setColor(Color::fromIntRGB(color));
+    renderer->drawPoint({p.x, p.y}, size);
 }
 
 void DrawStringFcn(b2Vec2 p, const char* s, void* context) {
@@ -82,7 +87,7 @@ void Box2dDebugDraw::render(b2WorldId worldId, RenderContext& context) {
                      false,  // joint extras
                      false,  // aabbs
                      false,  // mass
-                     false,  // contacts
+                     true,   // contacts
                      true,   // colors
                      false,  // normals
                      false,  // impulse

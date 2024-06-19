@@ -12,8 +12,8 @@ std::unique_ptr<World> createWorld(Size size,
 
 struct AppConfig {
     const char* name{nullptr};
-    int width{640};
-    int height{480};
+    int width{-1};
+    int height{-1};
     Color clearColor{Colors::WHITE};
 };
 

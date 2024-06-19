@@ -62,6 +62,12 @@ class Transform {
     void setScale(float scale) {
         m_scale.x = m_scale.y = scale;
     }
+    void setScaleX(float scale) {
+        m_scale.x = scale;
+    }
+    void setScaleY(float scale) {
+        m_scale.y = scale;
+    }
 
     float getRotation() const {
         return m_rotation;
