@@ -1,6 +1,13 @@
 
 #include "debugger.hpp"
 
+namespace {
+
+constexpr const char* WINDOW_NAME = "DEBUG";
+constexpr int ROW_HEIGHT = 15;
+
+};  // namespace
+
 // #pragma warning(push, 0)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -13,19 +20,42 @@
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 
-namespace {
-constexpr const char* WINDOW_NAME = "INFO";
-constexpr int ROW_HEIGHT = 15;
-};  // namespace
-
 #define NK_IMPLEMENTATION
 #include "third_party/nuklear.h"
 
 #define NK_SDL_RENDERER_IMPLEMENTATION
-#define NK_SDL_CLAMP_CLIP_RECT ;
+#define NK_SDL_CLAMP_CLIP_RECT
 #include "third_party/nuklear_sdl_renderer.h"
 
 #pragma GCC diagnostic pop
+
+extern "C" {
+nk_bool nkx_button_text(struct nk_context* ctx, const char* title, bool enabled) {
+    if (!ctx)
+        return 0;
+    if (!enabled) {
+        nk_widget_disable_begin(ctx);
+    }
+    auto r = nk_button_text(ctx, title, strlen(title));
+    if (!enabled) {
+        nk_widget_disable_end(ctx);
+    }
+    return r;
+}
+
+nk_bool nkx_button_symbol(struct nk_context* ctx, enum nk_symbol_type symbol, bool enabled) {
+    if (!ctx)
+        return 0;
+    if (!enabled) {
+        nk_widget_disable_begin(ctx);
+    }
+    auto r = nk_button_symbol(ctx, symbol);
+    if (!enabled) {
+        nk_widget_disable_end(ctx);
+    }
+    return r;
+}
+}
 
 void Debugger::init(SDL_Window* window, SDL_Renderer* renderer) {
     float scale = SDL_GetWindowDisplayScale(window);
@@ -34,6 +64,7 @@ void Debugger::init(SDL_Window* window, SDL_Renderer* renderer) {
     // TODO: fix nk_sdl_* to not use a global context
     nk_context* ctx = nk_sdl_init(window, renderer, scale);
     m_ctx = {ctx, nk_free};
+    // Font
     {
         struct nk_font_atlas* atlas;
         struct nk_font_config config = nk_font_config(0);
@@ -48,13 +79,47 @@ void Debugger::init(SDL_Window* window, SDL_Renderer* renderer) {
         // nk_style_load_all_cursors(ctx, atlas->cursors);
         nk_style_set_font(ctx, &font->handle);
     }
+    // Style
+    {
+        struct nk_color table[NK_COLOR_COUNT];
+        table[NK_COLOR_TEXT] = nk_rgba(190, 190, 190, 255);
+        table[NK_COLOR_WINDOW] = nk_rgba(30, 33, 40, 215);
+        table[NK_COLOR_HEADER] = nk_rgba(181, 45, 69, 220);
+        table[NK_COLOR_BORDER] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_BUTTON] = nk_rgba(181, 45, 69, 255);
+        table[NK_COLOR_BUTTON_HOVER] = nk_rgba(190, 50, 70, 255);
+        table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(195, 55, 75, 255);
+        table[NK_COLOR_TOGGLE] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_TOGGLE_HOVER] = nk_rgba(45, 60, 60, 255);
+        table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(181, 45, 69, 255);
+        table[NK_COLOR_SELECT] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_SELECT_ACTIVE] = nk_rgba(181, 45, 69, 255);
+        table[NK_COLOR_SLIDER] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_SLIDER_CURSOR] = nk_rgba(181, 45, 69, 255);
+        table[NK_COLOR_SLIDER_CURSOR_HOVER] = nk_rgba(186, 50, 74, 255);
+        table[NK_COLOR_SLIDER_CURSOR_ACTIVE] = nk_rgba(191, 55, 79, 255);
+        table[NK_COLOR_PROPERTY] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_EDIT] = nk_rgba(51, 55, 67, 225);
+        table[NK_COLOR_EDIT_CURSOR] = nk_rgba(190, 190, 190, 255);
+        table[NK_COLOR_COMBO] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_CHART] = nk_rgba(51, 55, 67, 255);
+        table[NK_COLOR_CHART_COLOR] = nk_rgba(170, 40, 60, 255);
+        table[NK_COLOR_CHART_COLOR_HIGHLIGHT] = nk_rgba(255, 0, 0, 255);
+        table[NK_COLOR_SCROLLBAR] = nk_rgba(30, 33, 40, 255);
+        table[NK_COLOR_SCROLLBAR_CURSOR] = nk_rgba(64, 84, 95, 255);
+        table[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = nk_rgba(70, 90, 100, 255);
+        table[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = nk_rgba(75, 95, 105, 255);
+        table[NK_COLOR_TAB_HEADER] = nk_rgba(181, 45, 69, 220);
+
+        nk_style_from_table(ctx, table);
+    }
 
     // Begin input for the first frame
     nk_input_begin(ctx);
 }
 
 void Debugger::event(const SDL_Event* event) {
-    if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_Q) {
+    if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_F1) {
         m_toggleWindow = true;
     } else if (event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
         m_windowHeight = event->window.data2;
@@ -72,14 +137,33 @@ void Debugger::preUpdate() {
         m_windowShown = !m_windowShown;
     }
 
-    m_windowShown = m_windowShown && nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, 300, m_windowHeight),
-                                              NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE);
+    m_windowShown =
+        m_windowShown && nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, 300, m_windowHeight),
+                                  NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE);
 }
 
-void Debugger::postUpdate() {
+void Debugger::postUpdate(const UpdateContext& context) {
     auto ctx = m_ctx.get();
 
     if (m_windowShown) {
+        {
+            auto state = context.getInputState();
+            if (nk_tree_push(ctx, NK_TREE_TAB, "INPUT", NK_MAXIMIZED)) {
+                nk_layout_row_static(ctx, 20, 20, 2);
+                nk_spacer(ctx);
+                nkx_button_symbol(ctx, NK_SYMBOL_TRIANGLE_UP, state.up.active());
+
+                nk_layout_row_static(ctx, 20, 20, 6);
+                nkx_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT, state.left.active());
+                nkx_button_symbol(ctx, NK_SYMBOL_TRIANGLE_DOWN, state.down.active());
+                nkx_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT, state.right.active());
+                nk_spacer(ctx);
+                nkx_button_text(ctx, "I", state.primaryAction.active());
+                nkx_button_text(ctx, "2", state.secondaryAction.active());
+
+                nk_tree_pop(ctx);
+            }
+        }
         if (nk_tree_push(ctx, NK_TREE_TAB, "VALUES", NK_MAXIMIZED)) {
             for (auto& entry : m_values) {
                 nk_layout_row_dynamic(ctx, ROW_HEIGHT, 2);

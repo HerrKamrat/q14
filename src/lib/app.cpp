@@ -131,8 +131,7 @@ void App::update() {
     }
 
     m_updateContext.setTicks(lastTicks + iterations * updateTicks);
-
-    m_debugger.postUpdate();
+    m_debugger.postUpdate(m_updateContext);
 }
 
 void App::render() {
