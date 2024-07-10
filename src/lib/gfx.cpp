@@ -131,7 +131,7 @@ void RenderContext::drawTexture(SDL_FRect* src,
 }
 
 void RenderContext::drawPoint(Vec2 point, float size) {
-    Vec2 tp = m_transform.transform(point - 0.5f / size) / size;
+    Vec2 tp = m_transform.transform(point) / size - 0.5f;
     auto p = reinterpret_cast<SDL_FPoint*>(&tp);
 
     if (size != 1.0f) {
