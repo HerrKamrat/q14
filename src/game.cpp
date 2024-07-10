@@ -398,13 +398,13 @@ void PhysicsWorld::update(UpdateContext& context) {
         bool pushingRightWall = onRightWall() && input.right.active();
         bool pushingWall = pushingLeftWall || pushingRightWall;
 
-        float friction = b2Shape_GetFriction(m_player.m_shapeId);
+        float friction = b2Shape_GetFriction(m_shapeId);
         if (onGround()) {
             friction = 1.0f;
         } else if (onWall()) {
             friction = 0.5f;
         }
-        b2Shape_SetFriction(m_player.m_shapeId, friction);
+        b2Shape_SetFriction(m_shapeId, friction);
 
         if (!walking) {
             float T = 0.1f;
@@ -494,11 +494,12 @@ void PhysicsWorld::update(UpdateContext& context) {
             SDL_Log("left: %s", m_player.m_leftSensor.contacts > 0 ? "CONTACT" : "");
             SDL_Log("bottom: %s", m_player.m_bottomSensor.contacts > 0 ? "CONTACT" : "");
             SDL_Log("bottom: %s", onGround() > 0 ? "CONTACT" : "");
+            SDL_Log("========================");
+
+            SDL_Log("velocity.x: %f", velocity.x);
+            SDL_Log("velocity.y: %f", velocity.y);
+            SDL_Log("friction: %f", friction);
         }
-        SDL_Log("========================");
-        SDL_Log("velocity.x: %f", velocity.x);
-        SDL_Log("velocity.y: %f", velocity.y);
-        SDL_Log("friction: %f", friction);
     }
 };
 
