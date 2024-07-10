@@ -53,9 +53,12 @@ void App::init(AppConfig config) {
     m_renderContext = {m_renderer};
 
     m_inputManager.init();
+
+    m_debugger.init(window, renderer);
 }
 
 void App::event(const SDL_Event* event) {
+    m_debugger.event(event);
 #ifdef ANDROID
     if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_AC_BACK) {
         SDL_MinimizeWindow(m_window);
@@ -99,11 +102,17 @@ void App::event(const SDL_Event* event) {
     };
 }
 
+void App::iterate() {
+    update();
+    render();
+};
+
 void App::update() {
     const double updateRate = 1.0 / 60.0;
     const uint64_t updateTicks = static_cast<uint64_t>(updateRate * 1000);
     const int maxIterations = 5;
 
+    m_debugger.preUpdate();
     // auto currentTicks = SDL_GetTicks();
     auto lastTicks = m_updateContext.getTicks();
     // auto delta = currentTicks - lastTicks;
@@ -122,6 +131,7 @@ void App::update() {
     }
 
     m_updateContext.setTicks(lastTicks + iterations * updateTicks);
+    m_debugger.postUpdate(m_updateContext);
 }
 
 void App::render() {
@@ -138,6 +148,8 @@ void App::render() {
         m_renderContext.drawRect({{0, 0}, m_size}, true);
         m_renderContext.setColor(Colors::WHITE);
     }
+
+    m_debugger.render();
 
     m_renderContext.present();
 }
