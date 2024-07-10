@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "debugger.hpp"
 #include "gfx.hpp"
 #include "input.hpp"
 #include "node.hpp"
@@ -24,6 +25,7 @@ class App {
 
     void init(AppConfig config = AppConfig());
     void event(const SDL_Event*);
+    void iterate();
     void update();
     void render();
 
@@ -40,6 +42,9 @@ class App {
     SDL_Renderer* renderer() const {
         return m_renderer;
     };
+    Debugger* debugger() {
+        return &m_debugger;
+    }
 
   protected:
   private:
@@ -61,4 +66,6 @@ class App {
     InputManager m_inputManager;
 
     std::unique_ptr<World> m_world;
+
+    Debugger m_debugger;
 };

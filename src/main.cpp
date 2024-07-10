@@ -8,6 +8,23 @@
 
 #include "game.hpp"
 
+struct AppLogUserData {
+    SDL_LogOutputFunction original_output_function;
+    void* original_userdata;
+    void* userdata;
+};
+
+void SDL_AppLog(void* userdata, int category, SDL_LogPriority priority, const char* message) {
+    auto appLogUserData = reinterpret_cast<AppLogUserData*>(userdata);
+    auto app = reinterpret_cast<App*>(appLogUserData->userdata);
+    if (appLogUserData->original_output_function) {
+        appLogUserData->original_output_function(appLogUserData->original_userdata, category,
+                                                 priority, message);
+    }
+
+    app->debugger()->log(message);
+};
+
 int SDL_Fail() {
     SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error %s", SDL_GetError());
     return -1;
@@ -38,6 +55,11 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
     app->setWorld(std::make_unique<PhysicsWorld>());
 
+    auto log = new AppLogUserData;
+    log->userdata = app;
+    SDL_GetLogOutputFunction(&log->original_output_function, &log->original_userdata);
+    SDL_SetLogOutputFunction(SDL_AppLog, log);
+
     SDL_Log("Application started successfully!");
     return app->status();
 }
@@ -50,8 +72,7 @@ int SDL_AppEvent(void* appstate, const SDL_Event* event) {
 
 int SDL_AppIterate(void* appstate) {
     auto* app = reinterpret_cast<App*>(appstate);
-    app->update();
-    app->render();
+    app->iterate();
     return app->status();
 }
 
@@ -61,6 +82,14 @@ void SDL_AppQuit(void* appstate) {
         SDL_DestroyRenderer(app->renderer());
         SDL_DestroyWindow(app->window());
         delete app;
+    }
+
+    void* userdata = nullptr;
+    SDL_GetLogOutputFunction(nullptr, &userdata);
+    if (userdata) {
+        auto log = reinterpret_cast<AppLogUserData*>(userdata);
+        SDL_SetLogOutputFunction(log->original_output_function, log->original_userdata);
+        delete log;
     }
 
     SDL_Quit();
