@@ -203,7 +203,8 @@ NK_API void nk_sdl_render(enum nk_anti_aliasing AA) {
                                       (const float*)((const nk_byte*)vertices + vp), vs,
                                       (const SDL_Color*)((const nk_byte*)vertices + vc), vs,
                                       (const float*)((const nk_byte*)vertices + vt), vs,
-                                      (vbuf.needed / vs), (void*)offset, cmd->elem_count, 2);
+                                      static_cast<int>(vbuf.needed / vs), (void*)offset,
+                                      cmd->elem_count, 2);
 
                 offset += cmd->elem_count;
             }
@@ -386,7 +387,6 @@ NK_API int nk_sdl_handle_event(const SDL_Event* evt) {
         case SDL_EVENT_MOUSE_BUTTON_UP: /* MOUSEBUTTONUP & MOUSEBUTTONDOWN share same routine */
         case SDL_EVENT_MOUSE_BUTTON_DOWN: {
             int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
-            // const int x = evt->button.x * sdl.win_scale, y = evt->button.y * sdl.win_scale;
             const int x = nk_sdl_window_to_nk_space_x(evt->button.x),
                       y = nk_sdl_window_to_nk_space_y(evt->button.y);
             switch (evt->button.button) {

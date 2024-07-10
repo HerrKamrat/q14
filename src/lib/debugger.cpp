@@ -36,7 +36,7 @@ nk_bool nkx_button_text(struct nk_context* ctx, const char* title, bool enabled)
     if (!enabled) {
         nk_widget_disable_begin(ctx);
     }
-    auto r = nk_button_text(ctx, title, strlen(title));
+    auto r = nk_button_text(ctx, title, static_cast<int>(strlen(title)));
     if (!enabled) {
         nk_widget_disable_end(ctx);
     }
@@ -176,7 +176,7 @@ void Debugger::postUpdate(const UpdateContext& context) {
             struct nk_list_view view;
             nk_layout_row_dynamic(ctx, ROW_HEIGHT * 10 * 1.2, 1);
             if (nk_list_view_begin(ctx, &view, "test", NK_WINDOW_BORDER, ROW_HEIGHT,
-                                   m_logs.size())) {
+                                   static_cast<int>(m_logs.size()))) {
                 nk_layout_row_dynamic(ctx, ROW_HEIGHT, 1);
                 for (int i = 0; i < view.count; ++i) {
                     nk_label(ctx, m_logs.at(view.begin + i).data(), NK_TEXT_LEFT);
