@@ -493,7 +493,7 @@ void PhysicsWorld::update(UpdateContext& context) {
             SDL_Log("right: %s", m_player.m_rightSensor.contacts > 0 ? "CONTACT" : "");
             SDL_Log("left: %s", m_player.m_leftSensor.contacts > 0 ? "CONTACT" : "");
             SDL_Log("bottom: %s", m_player.m_bottomSensor.contacts > 0 ? "CONTACT" : "");
-            SDL_Log("bottom: %s", onGround() > 0 ? "CONTACT" : "");
+            SDL_Log("bottom: %s", onGround() ? "CONTACT" : "");
             SDL_Log("========================");
 
             SDL_Log("velocity.x: %f", velocity.x);

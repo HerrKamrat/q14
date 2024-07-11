@@ -9,8 +9,13 @@ constexpr int ROW_HEIGHT = 15;
 };  // namespace
 
 // #pragma warning(push, 0)
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#else
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 
 #define NK_INCLUDE_FIXED_TYPES
 // #define NK_INCLUDE_STANDARD_IO
@@ -27,7 +32,11 @@ constexpr int ROW_HEIGHT = 15;
 #define NK_SDL_CLAMP_CLIP_RECT
 #include "third_party/nuklear_sdl_renderer.h"
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
 
 extern "C" {
 nk_bool nkx_button_text(struct nk_context* ctx, const char* title, bool enabled) {
@@ -138,8 +147,9 @@ void Debugger::preUpdate() {
     }
 
     m_windowShown =
-        m_windowShown && nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, 300, m_windowHeight),
-                                  NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE);
+        m_windowShown &&
+        nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, 300, static_cast<float>(m_windowHeight)),
+                 NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE);
 }
 
 void Debugger::postUpdate(const UpdateContext& context) {

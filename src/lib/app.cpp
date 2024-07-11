@@ -21,8 +21,10 @@ void App::init(AppConfig config) {
         auto display = SDL_GetDisplayForWindow(window);
         SDL_Rect bounds;
         if (!SDL_GetDisplayUsableBounds(display, &bounds)) {
-            float f = 1.0;
-            SDL_SetWindowSize(window, bounds.w * f, bounds.h * f);
+            float s = SDL_GetWindowDisplayScale(window);
+            float f = 1.0 / s;
+            SDL_SetWindowSize(window, static_cast<int>(bounds.w * f),
+                              static_cast<int>(bounds.h * f));
             SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
         }
     }
