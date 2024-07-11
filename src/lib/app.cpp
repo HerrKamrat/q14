@@ -22,7 +22,7 @@ void App::init(AppConfig config) {
         SDL_Rect bounds;
         if (!SDL_GetDisplayUsableBounds(display, &bounds)) {
             float s = SDL_GetWindowDisplayScale(window);
-            float f = 1.0 / s;
+            float f = 1.0f / s;
             SDL_SetWindowSize(window, static_cast<int>(bounds.w * f),
                               static_cast<int>(bounds.h * f));
             SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);

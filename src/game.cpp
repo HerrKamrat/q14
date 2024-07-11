@@ -382,8 +382,8 @@ void PhysicsWorld::update(UpdateContext& context) {
 
     // Handle input
     {
-        const float MAX_VELOCITY = 5;
-        const float VELOCITY_FORCE = 50;
+        const float MAX_VELOCITY = 5.0f;
+        const float VELOCITY_FORCE = 50.0f;
 
         auto m_bodyId = m_player.m_bodyId;
         auto m_shapeId = m_player.m_shapeId;
@@ -407,7 +407,7 @@ void PhysicsWorld::update(UpdateContext& context) {
         b2Shape_SetFriction(m_shapeId, friction);
 
         if (!walking) {
-            float T = 0.1f;
+            const float T = 0.1f;
             float x = 0.0;
             if (velocity.x < -T) {
                 x = 10;
@@ -426,11 +426,11 @@ void PhysicsWorld::update(UpdateContext& context) {
             // b2Shape_SetFriction(m_shapeId, walking ? 0 : 1);
             if (input.left.active() && velocity.x > -MAX_VELOCITY) {
                 // SDL_Log("left: %f", velocity.x);
-                b2Body_ApplyForceToCenter(m_bodyId, {-force, 0}, true);
+                b2Body_ApplyForceToCenter(m_bodyId, {-force, 0.0f}, true);
             }
             if (input.right.active() && velocity.x < MAX_VELOCITY) {
                 // SDL_Log("right: %f", velocity.x);
-                b2Body_ApplyForceToCenter(m_bodyId, {force, 0}, true);
+                b2Body_ApplyForceToCenter(m_bodyId, {force, 0.0f}, true);
                 // b2Body_ApplyLinearImpulseToCenter(m_bodyId, {1, 0}, true);
             }
         }
