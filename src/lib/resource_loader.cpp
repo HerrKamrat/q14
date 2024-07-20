@@ -3,7 +3,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
 #define STBI_ONLY_PNG
+
+// #pragma warning(push, 0)
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wunused-function"
 #include "third_party/stb_image.h"
+// #pragma GCC diagnostic pop
+// #pragma warning(pop)
 
 Image ResourceLoader::loadImage(std::span<const uint8_t> data) {
     Image image;  //{{}, {}, {nullptr}};

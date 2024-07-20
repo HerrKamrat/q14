@@ -195,8 +195,8 @@ void Debugger::postUpdate(const UpdateContext& context) {
             }
             nk_tree_pop(ctx);
         }
+        nk_end(ctx);
     }
-    nk_end(ctx);
 
     // NOTE: Move this to nuklear_sdl_renderer
     if (ctx->text_edit.active) {

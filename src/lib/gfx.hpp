@@ -67,6 +67,11 @@ class RenderContext {
     void present();
 
     void setTransform(const Transform& transform);
+    // const Transform& getTransform() const {
+    //     return m_transform;
+    // }
+    void pushTransform(const Transform& transform);
+    void popTransform();
 
     void setColor(Color color);
     void setTexture(Texture texture);
@@ -109,6 +114,7 @@ class RenderContext {
     }
 
   private:
+    Vec2 transform(Vec2 v);
     void drawTexture(SDL_FRect* src, SDL_FRect* dst, float angleDegree, bool flipX, bool flipY);
 
     class TextureObject {
@@ -129,5 +135,6 @@ class RenderContext {
     std::vector<TextureObject> m_textures;
     uint64_t m_frameCount;
 
-    Transform m_transform;
+    Mat3 m_transform;
+    std::vector<Mat3> m_transformStack = {Mat3(1.0)};
 };

@@ -28,8 +28,22 @@ void RenderContext::present() {
 }
 
 void RenderContext::setTransform(const Transform& transform) {
-    m_transform = transform;
+    m_transform = transform.getMatrix();
 }
+
+void RenderContext::pushTransform(const Transform& transform) {
+    m_transformStack.push_back(m_transformStack.back() * transform.getMatrix());
+    m_transform = m_transformStack.back();
+};
+
+void RenderContext::popTransform() {
+    if (m_transformStack.size() <= 1) {
+        return;
+    }
+
+    m_transformStack.pop_back();
+    m_transform = m_transformStack.back();
+};
 
 void RenderContext::setColor(Color color) {
     m_currentColor = color;
@@ -85,7 +99,7 @@ void RenderContext::drawTexture(const Rect& rect, const Rect& uvRect, const Mat3
     SDL_Vertex vertices[4];
     const int indices[6] = {0, 1, 2, 2, 1, 3};
 
-    auto m = m_transform.getMatrix() * matrix;
+    auto m = m_transform * matrix;
     auto t = uvRect;
 
     auto c0 = m * glm::vec3(rect.left(), rect.top(), 1);
@@ -110,6 +124,10 @@ void RenderContext::drawTexture(const Rect& rect, const Rect& uvRect, const Mat3
     SDL_RenderGeometry(m_renderer, m_currentTexture.ptr, &vertices[0], 4, &indices[0], 6);
 }
 
+Vec2 RenderContext::transform(Vec2 v) {
+    return m_transform * Vec3(v, 1.0);
+}
+
 void RenderContext::drawTexture(SDL_FRect* src,
                                 SDL_FRect* dst,
                                 float angleDegree,
@@ -131,7 +149,7 @@ void RenderContext::drawTexture(SDL_FRect* src,
 }
 
 void RenderContext::drawPoint(Vec2 point, float size) {
-    Vec2 tp = m_transform.transform(point) / size - 0.5f;
+    Vec2 tp = transform(point) / size - 0.5f;
     auto p = reinterpret_cast<SDL_FPoint*>(&tp);
 
     if (size != 1.0f) {
@@ -161,7 +179,7 @@ void RenderContext::drawPolygon(int vertexCount,
     for (int i = 0; i < vertexCount; i++) {
         vertex = {};
         callback(vertex, i);
-        vertex.position = m_transform.transform(vertex.position);
+        vertex.position = transform(vertex.position);
 
         vertices[i].position.x = vertex.position.x;
         vertices[i].position.y = vertex.position.y;

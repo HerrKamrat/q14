@@ -6,8 +6,12 @@
 
 #include "lib.hpp"
 
-class Box2dWorld;
+class PhysicsSystem;
 class GameObject;
+
+struct GameContext {
+    PhysicsSystem* physics;
+};
 
 class GameWorld : public World {
   public:
@@ -22,8 +26,10 @@ class GameWorld : public World {
         return true;
     }
 
+    GameContext getContext();
+
   private:
-    std::unique_ptr<Box2dWorld> m_physicsWorld;
+    std::unique_ptr<PhysicsSystem> m_physics;
     // TODO: replace with Camera-object
     Transform m_cameraTransform;
     std::vector<GameObject> m_gameObjects;
