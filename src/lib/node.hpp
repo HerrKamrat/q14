@@ -41,12 +41,22 @@ class UpdateContext {
 
 class Node;
 
-class World : public EventListener {
+class World {
   public:
     virtual ~World() = default;
-    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) {};
-    virtual void update(UpdateContext& context);
-    virtual void render(RenderContext& context);
+    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) = 0;
+    virtual void update(UpdateContext& context) = 0;
+    virtual void render(RenderContext& context) = 0;
+    virtual bool isAnimating() const = 0;
+    virtual void resize(Size size) = 0;
+};
+
+class OldWorldImpl : public World, EventListener {
+  public:
+    virtual ~OldWorldImpl() = default;
+    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) override {};
+    virtual void update(UpdateContext& context) override;
+    virtual void render(RenderContext& context) override;
     void addNode(std::unique_ptr<Node> node);
 
     void onMouseButtonEvent(MouseButtonEvent& event) override;
@@ -62,7 +72,7 @@ class World : public EventListener {
         return m_nodes.at(index).get();
     }
 
-    bool isAnimating() const {
+    virtual bool isAnimating() const override {
         return m_isAnimating;
     }
 

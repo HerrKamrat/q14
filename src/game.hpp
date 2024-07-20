@@ -1,8 +1,11 @@
 #pragma once
 
+#include <box2d/box2d.h>
+
 #include "lib.hpp"
 
-class PhysicsWorld : public World {
+namespace Deprecated {
+class PhysicsWorld : public OldWorldImpl {
   public:
     virtual void init(UpdateContext& updateContext, RenderContext& renderContext) override;
     virtual void update(UpdateContext& context) override;
@@ -10,4 +13,7 @@ class PhysicsWorld : public World {
 
     virtual void onResizeEvent(ResizeEvent& resize) override;
     virtual void onKeyboardEvent(KeyboardEvent& event) override;
+    virtual void resize(Size size) override;
 };
+
+}

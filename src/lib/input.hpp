@@ -6,7 +6,7 @@ struct AnalogInputValue {
     float value = 0;
     // bool justTriggered = false;
     inline bool active() const {
-        return value != 0;
+        return value != 0.0f;
     }
 };
 

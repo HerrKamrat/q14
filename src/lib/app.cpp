@@ -2,15 +2,25 @@
 
 #include "misc.hpp"
 
-App::App() : m_renderContext(nullptr), m_world(std::make_unique<World>()) {
+class NullWorld : public World {
+  public:
+    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) override {};
+    virtual void update(UpdateContext& context) override {};
+    virtual void render(RenderContext& context) override {};
+    virtual bool isAnimating() const override {
+        return false;
+    }
+    virtual void resize(Size size) override {};
+};
+
+App::App() : m_renderContext(nullptr), m_world(std::make_unique<NullWorld>()) {
 }
 
 App::~App() {
 }
 
 void App::init(AppConfig config) {
-    SDL_WindowFlags flags =
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_BORDERLESS;
+    SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
     SDL_Window* window = SDL_CreateWindow(config.name, config.width, config.height, flags);
     if (!window) {
         m_error = true;
@@ -116,8 +126,16 @@ void App::event(const SDL_Event* event) {
 }
 
 void App::iterate() {
+    // preUpdate();
+    if (m_worldToChangeTo) {
+        m_world = std::move(m_worldToChangeTo);
+    }
+
     update();
+    // postUpdate();
+    // preRender();
     render();
+    // postRender();
 };
 
 void App::update() {
@@ -126,15 +144,11 @@ void App::update() {
     const int maxIterations = 5;
 
     m_debugger.preUpdate();
-    // auto currentTicks = SDL_GetTicks();
+    auto currentTicks = SDL_GetTicks();
     auto lastTicks = m_updateContext.getTicks();
-    // auto delta = currentTicks - lastTicks;
+    auto delta = currentTicks - lastTicks;
     // TODO: fix this for real
-    int iterations = 1;  // delta / updateTicks;
-
-    if (iterations <= 0) {
-        return;
-    }
+    int iterations = delta / updateTicks;
 
     for (int i = std::min(iterations, maxIterations); i > 0; i--) {
         lastTicks = lastTicks + updateTicks;
@@ -162,6 +176,8 @@ void App::render() {
         m_renderContext.setColor(Colors::WHITE);
     }
 
+    // m_debugger.pushFrame();
+
     m_debugger.render();
 
     m_renderContext.present();
@@ -175,27 +191,29 @@ void App::setWorld(std::unique_ptr<World> world) {
     m_world = std::move(world);
     if (m_world) {
         m_world->init(m_updateContext, m_renderContext);
+        m_world->resize(m_size);
     }
 }
 
 void App::onResizeEvent(const SDL_Event* ev) {
     m_size = {(float)ev->window.data1, (float)ev->window.data2};
     SDL_Log("ResizeEvent: %d x %d", ev->window.data1, ev->window.data2);
-    ResizeEvent event(ev);
-    m_world->onResizeEvent(event);
+    m_world->resize(m_size);
+    // ResizeEvent event(ev);
+    // m_world->onResizeEvent(event);
 };
 
 void App::onKeyEvent(const SDL_Event* ev) {
     KeyboardEvent event(ev);
-    m_world->onKeyboardEvent(event);
+    // m_world->onKeyboardEvent(event);
 }
 
 void App::onMouseButtonEvent(const SDL_Event* ev) {
     MouseButtonEvent event(ev);
-    m_world->onMouseButtonEvent(event);
+    // m_world->onMouseButtonEvent(event);
 }
 
 void App::onMouseMotionEvent(const SDL_Event* ev) {
     MouseMotionEvent event(ev);
-    m_world->onMouseMotionEvent(event);
+    // m_world->onMouseMotionEvent(event);
 }

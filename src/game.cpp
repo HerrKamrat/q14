@@ -1,9 +1,10 @@
 #include "game.hpp"
 
-#include <box2d/box2d.h>
-
 #include "lib/box2d_debug.hpp"
 #include "resources.hpp"
+
+namespace Deprecated {
+
 namespace {
 // constexpr int kPlayerTag = 1;
 Transform m_cameraTransform;
@@ -31,6 +32,21 @@ class PhysicMoveEventListener {
 };
 
 };  // namespace
+
+class PhysicNode : public Node {
+  public:
+    virtual ~PhysicNode() = default;
+};
+
+class DynamicPhysicNode : public Node {
+  public:
+    virtual ~DynamicPhysicNode() = default;
+};
+
+class StaticPhysicNode : public Node {
+  public:
+    virtual ~StaticPhysicNode() = default;
+};
 
 std::unique_ptr<Node> createStaticObject(Texture tex, Vec2 position) {
     auto node = std::make_unique<Node>();
@@ -227,6 +243,7 @@ void PhysicsWorld::init(UpdateContext& updateContext, RenderContext& renderConte
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         shapeDef.density = 1.0f;
         shapeDef.friction = 1.0f;
+        shapeDef.restitution = 0.0f;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
@@ -265,6 +282,19 @@ void PhysicsWorld::init(UpdateContext& updateContext, RenderContext& renderConte
 
         addNode(std::move(node));
     }
+
+    /*{
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.type = b2_staticBody;
+        bodyDef.position = {0, 0};
+
+        b2BodyId bodyId = b2CreateBody(m_worldId, &bodyDef);
+
+        b2Polygon polygon = b2MakeBox(1.0f, 32.0f);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+        shapeDef.isSensor = true;
+        b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+    }*/
 }
 
 std::span<b2BodyMoveEvent> getMoveEvents(b2WorldId worldId) {
@@ -318,7 +348,7 @@ int jumpTicks = 0;
 int jumpDirection = 0;
 
 void PhysicsWorld::update(UpdateContext& context) {
-    World::update(context);
+    OldWorldImpl::update(context);
 
     // Update physics
     {
@@ -330,6 +360,10 @@ void PhysicsWorld::update(UpdateContext& context) {
                 Node* ptr = (Node*)event.userData;
                 Vec2 p = {event.transform.p.x, event.transform.p.y};
                 float r = b2Rot_GetAngle(event.transform.q);
+                if (p.y > 16) {
+                    p.y -= 16;
+                    b2Body_SetTransform(event.bodyId, {p.x, p.y}, r);
+                }
 
                 ptr->setPosition(p);
                 ptr->setRotation(r);
@@ -505,7 +539,7 @@ void PhysicsWorld::update(UpdateContext& context) {
 
 void PhysicsWorld::render(RenderContext& context) {
     context.setTransform(m_cameraTransform);
-    World::render(context);
+    OldWorldImpl::render(context);
 
     if (m_isDebugDraw) {
         context.clear(Colors::BLACK);
@@ -526,8 +560,23 @@ void PhysicsWorld::onResizeEvent(ResizeEvent& resize) {
     m_cameraTransform.setPosition(offset);
 }
 
+void PhysicsWorld::resize(Size size) {
+    Size targetSize{16, 16};
+    auto windowSize = size;
+    auto sizeDiff = windowSize / targetSize;
+    auto scale = std::min(sizeDiff.x, sizeDiff.y);
+    auto offset = (windowSize - targetSize * scale) / 2.0f;
+
+    //    Node* ptr = (Node*)b2Body_GetUserData(m_player.m_bodyId);
+
+    m_cameraTransform.setScale(scale);
+    m_cameraTransform.setPosition(offset);
+}
+
 void PhysicsWorld::onKeyboardEvent(KeyboardEvent& event) {
     if (event.released() && event.keycode('q')) {
         m_isDebugDraw = !m_isDebugDraw;
     }
 };
+
+}

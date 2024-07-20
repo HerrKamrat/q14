@@ -65,6 +65,7 @@ class App {
 
     InputManager m_inputManager;
 
+    std::unique_ptr<World> m_worldToChangeTo;
     std::unique_ptr<World> m_world;
 
     Debugger m_debugger;
