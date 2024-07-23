@@ -62,7 +62,6 @@ class GameObject {
 
     void update(UpdateContext& context) {
         for (auto& component : m_components) {
-            // component->setGameObject(this);
             component->update(context);
         }
     };
@@ -242,42 +241,6 @@ class PhysicsSystem {
         b2WorldDef worldDef = b2DefaultWorldDef();
         worldDef.gravity = {0.0f, 10.0f};
         m_id = b2CreateWorld(&worldDef);
-
-        {
-            const Vec2 position = Vec2{8, 15.0f + 0.5f};
-            const int size = 16;
-
-            b2BodyDef groundBodyDef = b2DefaultBodyDef();
-            groundBodyDef.position = {position.x, position.y};
-
-            b2BodyId groundId = b2CreateBody(m_id, &groundBodyDef);
-
-            b2Polygon groundBox = b2MakeBox(0.5f * size, 0.5f);
-
-            b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-            // groundShapeDef.userData = ptr;
-            groundShapeDef.friction = 1.0f;
-            groundShapeDef.restitution = 0.0f;
-            b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
-        }
-
-        {
-            const Vec2 position = Vec2{15.0f + 0.5f, 8};
-            const int size = 16;
-
-            b2BodyDef groundBodyDef = b2DefaultBodyDef();
-            groundBodyDef.position = {position.x, position.y};
-
-            b2BodyId groundId = b2CreateBody(m_id, &groundBodyDef);
-
-            b2Polygon groundBox = b2MakeBox(0.5f, 0.5f * size);
-
-            b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-            // groundShapeDef.userData = ptr;
-            groundShapeDef.friction = 1.0f;
-            groundShapeDef.restitution = 0.0f;
-            b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
-        }
     }
 
     void update(UpdateContext& context) {
@@ -321,9 +284,10 @@ class PhysicsSystem {
         m_debugDraw.render(m_id, context);
     }
 
-    std::unique_ptr<PhysicsBodyComponent> createBody(Vec2 position = Vec2(0, 0)) {
+    std::unique_ptr<PhysicsBodyComponent> createBody(Vec2 position = Vec2(0, 0),
+                                                     b2BodyType type = b2_dynamicBody) {
         b2BodyDef bodyDef = b2DefaultBodyDef();
-        bodyDef.type = b2_dynamicBody;
+        bodyDef.type = type;
         bodyDef.fixedRotation = true;
         bodyDef.position = {position.x, position.y};
 
@@ -437,8 +401,6 @@ class PlayerComponent : public Component {
     bool onWall() const {
         return onLeftWall() || onRightWall();
     }
-
-    // bool onLeft
 
     void update(UpdateContext& context) override {
         const float MAX_VELOCITY = 5.0f;
@@ -554,9 +516,11 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
     auto img6 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0000);
     auto tex6 = renderContext.createTexture(img6.info, img6.pixels);
 
+    auto img7 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0006);
+    auto tex7 = renderContext.createTexture(img7.info, img7.pixels);
+
     for (int i = 0; i < 1; i++) {
-        m_gameObjects.emplace_back();
-        auto& obj = m_gameObjects.back();
+        auto& obj = m_gameObjects.emplace_back();
         // auto physics = m_physics->create();
         auto sprite = Sprite::create(tex6);
         auto input = std::make_unique<PlayerComponent>(nullptr, sprite.get());
@@ -567,30 +531,27 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
 
         obj.getTransform().setPosition({8, 14});
     }
-    // m_gameObjects.emplace_back();
-    // m_gameObjects.back().addComponent(m_physics->create());
+    auto createPlatform = [=](Rect rect) {
+        auto& obj = m_gameObjects.emplace_back();
+        auto sprite = Sprite::create(tex6);
+        auto input = std::make_unique<PlayerComponent>(nullptr, sprite.get());
 
+        b2Polygon polygon = b2MakeBox(rect.width() / 2, rect.height() / 2);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+        obj.addComponent(m_physics->createBody(rect.center(), b2_staticBody))
+            ->addShape(shapeDef, polygon);
+
+        obj.getTransform().setPosition(rect.center());
+    };
+
+    createPlatform({{0, 15}, {16, 1}});
+    createPlatform({{0, 12}, {8, 1}});
+    createPlatform({{0, 9}, {4, 1}});
     GameContext gc = getContext();
     for (auto& obj : m_gameObjects) {
         obj.init(gc);
     }
-
-#if 0
-    //add background
-    auto sprite1 = std::make_unique<Sprite>(resourceLoader.get("bg1"));
-    auto sprite2 = std::make_unique<Sprite>(resourceLoader.get("bg2"));
-    auto sprite3 = std::make_unique<Sprite>(resourceLoader.get("bg3"));
-    createObject(sprite1, sprite2, sprite3, std::make_unique<Background>(*sprite1, *sprite2, *sprite3));
-
-    //add platforms
-    createObject(Sprite::create("platform"), Platform::create({0,0}, {2,3}));
-    createObject(Sprite::create("platform"), Platform::create({0,0}, {12,13}));
-
-    //add objects
-    createObject(Sprite::create("platform"))
-
-    //add players
-#endif
 }
 
 void GameWorld::resize(Size size) {
@@ -598,8 +559,6 @@ void GameWorld::resize(Size size) {
     auto sizeDiff = size / targetSize;
     auto scale = std::min(sizeDiff.x, sizeDiff.y);
     auto offset = (size - targetSize * scale) / 2.0f;
-
-    //    Node* ptr = (Node*)b2Body_GetUserData(m_player.m_bodyId);
 
     m_cameraTransform.setScale(scale);
     m_cameraTransform.setPosition(offset);
@@ -613,8 +572,6 @@ void GameWorld::update(UpdateContext& context) {
         obj.update(context);
     }
 
-    // std::reverse(m_gameObjects.begin(), m_gameObjects.end());
-
     {
         [[maybe_unused]] auto it =
             std::remove_if(m_gameObjects.begin(), m_gameObjects.end(), [&gc](GameObject& obj) {
@@ -624,8 +581,8 @@ void GameWorld::update(UpdateContext& context) {
                 }
                 return false;
             });
-        // std::for_each(it, m_gameObjects.end(), [&gc](GameObject& obj) { obj.deinit(gc); });
-        // m_gameObjects.erase(it, m_gameObjects.end());
+        std::for_each(it, m_gameObjects.end(), [&gc](GameObject& obj) { obj.deinit(gc); });
+        m_gameObjects.erase(it, m_gameObjects.end());
     }
 };
 
@@ -638,6 +595,7 @@ void GameWorld::render(RenderContext& context) {
         obj.render(context);
     }
 
+    context.setColor({255, 255, 255, 32});
     m_physics->render(context);
     context.popTransform();
 }

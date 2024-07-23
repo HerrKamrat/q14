@@ -222,7 +222,3 @@ void Debugger::log(const char* log) {
     }
     m_logs.push_back(log);
 }
-
-void Debugger::value(const char* key, const char* value) {
-    m_values.push_back(std::make_tuple(key, value));
-}

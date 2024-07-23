@@ -7,37 +7,7 @@
 #include "gfx.hpp"
 #include "input.hpp"
 
-class UpdateContext {
-  public:
-    void setTicks(uint64_t ticks) {
-        auto prev = m_ticks;
-        m_ticks = ticks;
-        m_ticksDelta = ticks - prev;
-    };
-
-    uint64_t getTicks() const {
-        return m_ticks;
-    }
-
-    float getDeltaTime() {
-        return m_ticksDelta / 1000.0f;
-    }
-
-    void setInputState(InputState inputState) {
-        m_inputState = inputState;
-    }
-
-    const InputState& getInputState() const {
-        return m_inputState;
-    }
-
-  protected:
-  private:
-    uint64_t m_ticks;
-    uint64_t m_ticksDelta;
-
-    InputState m_inputState;
-};
+#include "context.hpp"
 
 class Node;
 
@@ -49,36 +19,6 @@ class World {
     virtual void render(RenderContext& context) = 0;
     virtual bool isAnimating() const = 0;
     virtual void resize(Size size) = 0;
-};
-
-class OldWorldImpl : public World, EventListener {
-  public:
-    virtual ~OldWorldImpl() = default;
-    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) override {};
-    virtual void update(UpdateContext& context) override;
-    virtual void render(RenderContext& context) override;
-    void addNode(std::unique_ptr<Node> node);
-
-    void onMouseButtonEvent(MouseButtonEvent& event) override;
-    void onMouseMotionEvent(MouseMotionEvent& event) override;
-
-    // TODO: remove this...
-    size_t size() {
-        return m_nodes.size();
-    }
-
-    // TODO: remove this...
-    Node* nodeAt(int index) {
-        return m_nodes.at(index).get();
-    }
-
-    virtual bool isAnimating() const override {
-        return m_isAnimating;
-    }
-
-  private:
-    std::vector<std::unique_ptr<Node>> m_nodes;
-    bool m_isAnimating{true};
 };
 
 class Node : public EventListener {

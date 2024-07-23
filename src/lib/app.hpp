@@ -7,10 +7,6 @@
 #include "input.hpp"
 #include "node.hpp"
 
-std::unique_ptr<World> createWorld(Size size,
-                                   UpdateContext& updateContext,
-                                   RenderContext& renderContext);
-
 struct AppConfig {
     const char* name{nullptr};
     int width{-1};

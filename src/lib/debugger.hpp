@@ -21,8 +21,6 @@ class Debugger {
     void render();
 
     void log(const char* log);
-    void label(const char* label);
-    void value(const char* key, const char* value);
 
   private:
     std::unique_ptr<nk_context, void (*)(nk_context*)> m_ctx{nullptr, nullptr};
