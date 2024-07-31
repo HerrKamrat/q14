@@ -552,11 +552,11 @@ class PlayerComponent : public Component {
             const float T = 0.1f;
             float x = 0.0f;
             if (velocity.x < -T) {
-                x = 10;
+                x = 10.0f;
             } else if (velocity.x > T) {
-                x = -10;
+                x = -10.0f;
             }
-            body().applyForce({x, 0});
+            body().applyForce({x, 0.0f});
         } else {
             float force = VELOCITY_FORCE;
             if (onGround()) {
@@ -586,12 +586,12 @@ class PlayerComponent : public Component {
             --jumpTicks;
             // SDL_Log("up");
 
-            float force = body().getMass() * 2 / (1 / 60.0);
+            float force = body().getMass() * 2 / (1 / 60.0f);
             float forceX = 0;
-            if (pushingLeftWall || jumpDirection < 0) {
+            if (pushingLeftWall || jumpDirection < 0.0f) {
                 forceX = force;
                 jumpDirection = -1;
-            } else if (pushingRightWall || jumpDirection > 0) {
+            } else if (pushingRightWall || jumpDirection > 0.0f) {
                 forceX = -force;
                 jumpDirection = 1;
             }
