@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "lib/box2d_debug.hpp"
-#include "lib/system.hpp"
 
 #include "resources.hpp"
 class GameObject;
