@@ -171,11 +171,17 @@ void RenderContext::drawPoint(Vec2 point, float size) {
     }
 }
 
-void RenderContext::drawLine(Vec2 p0, Vec2 p1) {
-    Vec2 tp0 = transform(p0);
-    Vec2 tp1 = transform(p1);
+void RenderContext::drawLine(Vec2 p0, Vec2 p1, float size) {
+    Vec2 tp0 = transform(p0) / size - 0.5f;
+    Vec2 tp1 = transform(p1) / size - 0.5f;
 
-    SDL_RenderLine(m_renderer, tp0.x, tp0.y, tp1.x, tp1.y);
+    if (size != 1.0f) {
+        SDL_SetRenderScale(m_renderer, size, size);
+        SDL_RenderLine(m_renderer, tp0.x, tp0.y, tp1.x, tp1.y);
+        SDL_SetRenderScale(m_renderer, 1.0f, 1.0f);
+    } else {
+        SDL_RenderLine(m_renderer, tp0.x, tp0.y, tp1.x, tp1.y);
+    }
 }
 
 void RenderContext::drawPolygon(int vertexCount,

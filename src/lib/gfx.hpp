@@ -91,7 +91,7 @@ class RenderContext {
     void drawTexture(const Rect& rect, const Rect& textureRect, const Mat3& matrix);
 
     void drawPoint(Vec2 point, float size = 1.0f);
-    void drawLine(Vec2 p0, Vec2 p1);
+    void drawLine(Vec2 p0, Vec2 p1, float size = 1.0f);
 
     void drawPolygon(int vertexCount, bool outline, std::function<void(Vertex&, int)> callback);
 

@@ -348,8 +348,10 @@ class TrailRendererComponent : public Component {
     };
 
     void render(RenderContext& context) override {
-        context.drawLine(m_delta, {0.0f, 0.0f});
-        context.drawPoint({0.0f, 0.0f}, 10.0f);
+        context.setColor(Colors::WHITE);
+        context.drawPoint({0.0f, 0.0f}, 2.0f);
+        context.setColor(Colors::WHITE);
+        context.drawLine(m_delta, {0.0f, 0.0f}, 2.0f);
         // context.setTexture(m_textureRect.texture);
         // Mat3 mat = Mat3(1.0f);
         // mat[0][0] = m_flipX ? 1.0f : -1.0f;
@@ -444,6 +446,18 @@ class PhysicsSystem {
 
             bodyA->onCollisionEnded(*bodyB);
             bodyB->onCollisionEnded(*bodyA);
+        }
+
+        for (auto& event : getHitEvents()) {
+            auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
+            auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
+
+            auto bodyA = reinterpret_cast<PhysicsBodyComponent*>(userDataA);
+            auto bodyB = reinterpret_cast<PhysicsBodyComponent*>(userDataB);
+
+            // TODO: this is not correct (:
+            bodyA->onCollisionBegan(*bodyB);
+            bodyB->onCollisionBegan(*bodyA);
         }
     };
 
@@ -576,6 +590,28 @@ class EnemyBehaviourComponent : public BehaviourComponent {
     bool jump() const override {
         return false;  // math::random(0.0, 1.0) > 0.75;
     };
+};
+
+class DelayedCondition {
+  public:
+    DelayedCondition() = default;
+    DelayedCondition(uint64_t interval) : m_interval(interval){};
+
+    bool operator()(bool condition, uint64_t ticks) {
+        return condition && available(ticks);
+    };
+
+  private:
+    bool available(uint64_t ticks) {
+        if (ticks - m_lastTick > m_interval) {
+            m_lastTick = ticks;
+            return true;
+        }
+        return false;
+    }
+
+    uint64_t m_lastTick = 0;
+    uint64_t m_interval = 600;
 };
 
 // TODO: rename
@@ -732,7 +768,8 @@ class PlayerComponent : public Component {
             SDL_Log("Jump end");
         }
 
-        if (behaviour().primaryAction()) {
+        if (m_primaryAction(behaviour().primaryAction(), updateContext.getTicks())) {
+            SDL_Log("Fire");
             auto& obj = context.createObject();
             {
                 const auto& p = getGameObject().getTransform().getPosition();
@@ -741,7 +778,7 @@ class PlayerComponent : public Component {
                 bodyDef.fixedRotation = true;
                 bodyDef.type = b2_dynamicBody;
                 bodyDef.isBullet = true;
-                bodyDef.gravityScale = 0.01f;
+                bodyDef.gravityScale = 0.0f;
                 b2Circle circle{{0.0f, 0.0f}, 0.01f};
 
                 b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -752,7 +789,7 @@ class PlayerComponent : public Component {
                 auto pc = obj.addComponent(context.physics->createBody(bodyDef),
                                            Components::Tags::PHYSICS);
                 pc->addShape(shapeDef, circle);
-                pc->applyForce({1.0f, 0.0f});
+                pc->applyForce({1.0f, math::random(-0.1f, 0.1f)});
 
                 obj.addComponent(std::make_unique<BulletComponent>());
                 obj.addComponent(std::make_unique<TrailRendererComponent>());
@@ -767,6 +804,8 @@ class PlayerComponent : public Component {
             }
         }
     };
+
+    DelayedCondition m_primaryAction;
 
     PhysicsBodyComponent& body() {
         return *m_physics;
