@@ -11,16 +11,16 @@ Goal: create a tiny and easy to use game engine, for quick prototyping of simple
 
 ## TODO
 
-- [ ] Enable strict warnings/errors
-- [ ] Physic system
-- [ ] Player input
+- [x] Enable strict warnings/errors
+- [x] Physic system
+- [x] Player input
 - [ ] Refactoring and clean up of the node/world system, and memory handling
-- [ ] Virtual gamepad for Mobile and Mobile Browsers
 - [ ] Resource Management
   - [ ] Resource Cache
   - [ ] Dynamic Texture Atlas
   - [?] File API
   - [?] Replace STBI
+- [ ] Virtual gamepad for Mobile and Mobile Browsers
 - [ ] Sound system
 - [ ] Network API - http requests
 - [ ] Network API - client/server

@@ -5,16 +5,12 @@
 #include "debugger.hpp"
 #include "gfx.hpp"
 #include "input.hpp"
-#include "node.hpp"
-
-std::unique_ptr<World> createWorld(Size size,
-                                   UpdateContext& updateContext,
-                                   RenderContext& renderContext);
+#include "world.hpp"
 
 struct AppConfig {
     const char* name{nullptr};
-    int width{640};
-    int height{480};
+    int width{-1};
+    int height{-1};
     Color clearColor{Colors::WHITE};
 };
 
@@ -65,6 +61,7 @@ class App {
 
     InputManager m_inputManager;
 
+    std::unique_ptr<World> m_worldToChangeTo;
     std::unique_ptr<World> m_world;
 
     Debugger m_debugger;

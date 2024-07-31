@@ -9,8 +9,13 @@ constexpr int ROW_HEIGHT = 15;
 };  // namespace
 
 // #pragma warning(push, 0)
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#else
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 
 #define NK_INCLUDE_FIXED_TYPES
 // #define NK_INCLUDE_STANDARD_IO
@@ -27,7 +32,11 @@ constexpr int ROW_HEIGHT = 15;
 #define NK_SDL_CLAMP_CLIP_RECT
 #include "third_party/nuklear_sdl_renderer.h"
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
 
 extern "C" {
 nk_bool nkx_button_text(struct nk_context* ctx, const char* title, bool enabled) {
@@ -36,7 +45,7 @@ nk_bool nkx_button_text(struct nk_context* ctx, const char* title, bool enabled)
     if (!enabled) {
         nk_widget_disable_begin(ctx);
     }
-    auto r = nk_button_text(ctx, title, strlen(title));
+    auto r = nk_button_text(ctx, title, static_cast<int>(strlen(title)));
     if (!enabled) {
         nk_widget_disable_end(ctx);
     }
@@ -122,7 +131,14 @@ void Debugger::event(const SDL_Event* event) {
     if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_F1) {
         m_toggleWindow = true;
     } else if (event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-        m_windowHeight = event->window.data2;
+        auto w = event->window.data1;
+        auto h = event->window.data2;
+        auto s = ROW_HEIGHT * 30;
+        if (w > h) {
+            m_windowSize = {glm::min(s, w), h};
+        } else {
+            m_windowSize = {w, glm::min(s, h)};
+        }
     }
 
     nk_sdl_handle_event(event);
@@ -138,7 +154,7 @@ void Debugger::preUpdate() {
     }
 
     m_windowShown =
-        m_windowShown && nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, 300, m_windowHeight),
+        m_windowShown && nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, m_windowSize.x, m_windowSize.y),
                                   NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE);
 }
 
@@ -176,7 +192,7 @@ void Debugger::postUpdate(const UpdateContext& context) {
             struct nk_list_view view;
             nk_layout_row_dynamic(ctx, ROW_HEIGHT * 10 * 1.2, 1);
             if (nk_list_view_begin(ctx, &view, "test", NK_WINDOW_BORDER, ROW_HEIGHT,
-                                   m_logs.size())) {
+                                   static_cast<int>(m_logs.size()))) {
                 nk_layout_row_dynamic(ctx, ROW_HEIGHT, 1);
                 for (int i = 0; i < view.count; ++i) {
                     nk_label(ctx, m_logs.at(view.begin + i).data(), NK_TEXT_LEFT);
@@ -185,8 +201,8 @@ void Debugger::postUpdate(const UpdateContext& context) {
             }
             nk_tree_pop(ctx);
         }
+        nk_end(ctx);
     }
-    nk_end(ctx);
 
     // NOTE: Move this to nuklear_sdl_renderer
     if (ctx->text_edit.active) {
@@ -213,6 +229,29 @@ void Debugger::log(const char* log) {
     m_logs.push_back(log);
 }
 
-void Debugger::value(const char* key, const char* value) {
-    m_values.push_back(std::make_tuple(key, value));
+bool Debugger::pushSection(const char* name) {
+    auto ctx = m_ctx.get();
+    return !!nk_tree_push(ctx, NK_TREE_TAB, name, NK_MINIMIZED);
+}
+
+void Debugger::popSection() {
+    auto ctx = m_ctx.get();
+    nk_tree_pop(ctx);
+}
+
+void Debugger::texture(SDL_Texture* ptr) {
+    auto ctx = m_ctx.get();
+
+    nk_layout_row_dynamic(ctx, ROW_HEIGHT * 10 * 1.2, 1);
+    nk_image(ctx, nk_image_ptr(ptr));
+}
+
+bool Debugger::value(const char* key, bool& value) {
+    auto ctx = m_ctx.get();
+    nk_layout_row_dynamic(ctx, ROW_HEIGHT, 2);
+    nk_label(ctx, key, NK_TEXT_LEFT);
+    nk_bool active = value;
+    nk_checkbox_label(ctx, key, &active);
+    value = active;
+    return value;
 }

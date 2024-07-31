@@ -3,72 +3,24 @@
 #include <memory>
 #include <vector>
 
+#include "context.hpp"
 #include "event.hpp"
 #include "gfx.hpp"
 #include "input.hpp"
 
-class UpdateContext {
-  public:
-    void setTicks(uint64_t ticks) {
-        auto prev = m_ticks;
-        m_ticks = ticks;
-        m_ticksDelta = ticks - prev;
-    };
-
-    uint64_t getTicks() const {
-        return m_ticks;
-    }
-
-    float getDeltaTime() {
-        return m_ticksDelta / 1000.0f;
-    }
-
-    void setInputState(InputState inputState) {
-        m_inputState = inputState;
-    }
-
-    const InputState& getInputState() const {
-        return m_inputState;
-    }
-
-  protected:
-  private:
-    uint64_t m_ticks;
-    uint64_t m_ticksDelta;
-
-    InputState m_inputState;
-};
+#include "context.hpp"
 
 class Node;
 
-class World : public EventListener {
+class World {
   public:
     virtual ~World() = default;
-    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) {};
-    virtual void update(UpdateContext& context);
-    virtual void render(RenderContext& context);
-    void addNode(std::unique_ptr<Node> node);
-
-    void onMouseButtonEvent(MouseButtonEvent& event) override;
-    void onMouseMotionEvent(MouseMotionEvent& event) override;
-
-    // TODO: remove this...
-    size_t size() {
-        return m_nodes.size();
-    }
-
-    // TODO: remove this...
-    Node* nodeAt(int index) {
-        return m_nodes.at(index).get();
-    }
-
-    bool isAnimating() const {
-        return m_isAnimating;
-    }
-
-  private:
-    std::vector<std::unique_ptr<Node>> m_nodes;
-    bool m_isAnimating{true};
+    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) = 0;
+    virtual void update(UpdateContext& context) = 0;
+    virtual void render(RenderContext& context) = 0;
+    virtual bool isAnimating() const = 0;
+    virtual void resize(Size size) = 0;
+    virtual void debug(Debugger& debug) = 0;
 };
 
 class Node : public EventListener {
@@ -166,13 +118,13 @@ class Node : public EventListener {
     }
 
     void setScaleX(float scale) {
-        // m_transform.setScaleX(scale);
+        m_transform.setScaleX(scale);
     }
     float getScaleX() {
         return m_transform.getScale().x;
     }
     void setScaleY(float scale) {
-        // m_transform.setScaleY(scale);
+        m_transform.setScaleY(scale);
     }
     float getScaleY() {
         return getScale().y;

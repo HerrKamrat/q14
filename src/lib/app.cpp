@@ -2,7 +2,19 @@
 
 #include "misc.hpp"
 
-App::App() : m_renderContext(nullptr), m_world(std::make_unique<World>()) {
+class NullWorld : public World {
+  public:
+    void init(UpdateContext& updateContext, RenderContext& renderContext) override {};
+    void update(UpdateContext& context) override {};
+    void render(RenderContext& context) override {};
+    bool isAnimating() const override {
+        return false;
+    }
+    void resize(Size size) override {};
+    void debug(Debugger& debug) override {};
+};
+
+App::App() : m_renderContext(nullptr), m_world(std::make_unique<NullWorld>()) {
 }
 
 App::~App() {
@@ -14,6 +26,18 @@ void App::init(AppConfig config) {
     if (!window) {
         m_error = true;
         return;
+    }
+
+    if (config.width <= 0 || config.height <= 0) {
+        auto display = SDL_GetDisplayForWindow(window);
+        SDL_Rect bounds;
+        if (!SDL_GetDisplayUsableBounds(display, &bounds)) {
+            float s = SDL_GetWindowDisplayScale(window);
+            float f = 1.0f / s;
+            SDL_SetWindowSize(window, static_cast<int>(bounds.w * f),
+                              static_cast<int>(bounds.h * f));
+            SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        }
     }
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
@@ -103,8 +127,16 @@ void App::event(const SDL_Event* event) {
 }
 
 void App::iterate() {
+    // preUpdate();
+    if (m_worldToChangeTo) {
+        m_world = std::move(m_worldToChangeTo);
+    }
+
     update();
+    // postUpdate();
+    // preRender();
     render();
+    // postRender();
 };
 
 void App::update() {
@@ -113,15 +145,11 @@ void App::update() {
     const int maxIterations = 5;
 
     m_debugger.preUpdate();
-    // auto currentTicks = SDL_GetTicks();
+    auto currentTicks = SDL_GetTicks();
     auto lastTicks = m_updateContext.getTicks();
-    // auto delta = currentTicks - lastTicks;
+    auto delta = currentTicks - lastTicks;
     // TODO: fix this for real
-    int iterations = 1;  // delta / updateTicks;
-
-    if (iterations <= 0) {
-        return;
-    }
+    int iterations = static_cast<int>(delta / updateTicks);
 
     for (int i = std::min(iterations, maxIterations); i > 0; i--) {
         lastTicks = lastTicks + updateTicks;
@@ -131,6 +159,10 @@ void App::update() {
     }
 
     m_updateContext.setTicks(lastTicks + iterations * updateTicks);
+    if (m_debugger.active()) {
+        m_world->debug(m_debugger);
+        m_renderContext.debug(m_debugger);
+    }
     m_debugger.postUpdate(m_updateContext);
 }
 
@@ -149,6 +181,8 @@ void App::render() {
         m_renderContext.setColor(Colors::WHITE);
     }
 
+    // m_debugger.pushFrame();
+
     m_debugger.render();
 
     m_renderContext.present();
@@ -162,27 +196,29 @@ void App::setWorld(std::unique_ptr<World> world) {
     m_world = std::move(world);
     if (m_world) {
         m_world->init(m_updateContext, m_renderContext);
+        m_world->resize(m_size);
     }
 }
 
 void App::onResizeEvent(const SDL_Event* ev) {
     m_size = {(float)ev->window.data1, (float)ev->window.data2};
     SDL_Log("ResizeEvent: %d x %d", ev->window.data1, ev->window.data2);
-    ResizeEvent event(ev);
-    m_world->onResizeEvent(event);
+    m_world->resize(m_size);
+    // ResizeEvent event(ev);
+    // m_world->onResizeEvent(event);
 };
 
 void App::onKeyEvent(const SDL_Event* ev) {
     KeyboardEvent event(ev);
-    m_world->onKeyboardEvent(event);
+    // m_world->onKeyboardEvent(event);
 }
 
 void App::onMouseButtonEvent(const SDL_Event* ev) {
     MouseButtonEvent event(ev);
-    m_world->onMouseButtonEvent(event);
+    // m_world->onMouseButtonEvent(event);
 }
 
 void App::onMouseMotionEvent(const SDL_Event* ev) {
     MouseMotionEvent event(ev);
-    m_world->onMouseMotionEvent(event);
+    // m_world->onMouseMotionEvent(event);
 }

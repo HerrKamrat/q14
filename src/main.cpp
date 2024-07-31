@@ -7,6 +7,7 @@
 #include "lib.hpp"
 
 #include "game.hpp"
+#include "world.hpp"
 
 struct AppLogUserData {
     SDL_LogOutputFunction original_output_function;
@@ -36,30 +37,31 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
         return SDL_Fail();
     }
 
-    SDL_Log("SDL: %d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
-    SDL_Log("GLM: %d.%d.%d", GLM_VERSION_MAJOR, GLM_VERSION_MINOR, GLM_VERSION_PATCH);
-    {
-        auto version = b2GetVersion();
-        SDL_Log("Box2c: %d.%d.%d", version.major, version.minor, version.revision);
-    }
-
     std::srand(static_cast<unsigned int>(std::time(NULL)));
 
     // set up the application data
     AppConfig config;
     config.name = version();
+    config.width = 1280;
+    config.height = 1024;
     config.clearColor = {194, 227, 232, 255};
     auto app = new App();
     *appstate = app;
     app->init(config);
 
-    app->setWorld(std::make_unique<PhysicsWorld>());
+    app->setWorld(std::make_unique<GameWorld>());
 
     auto log = new AppLogUserData;
     log->userdata = app;
     SDL_GetLogOutputFunction(&log->original_output_function, &log->original_userdata);
     SDL_SetLogOutputFunction(SDL_AppLog, log);
 
+    SDL_Log("SDL: %d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
+    SDL_Log("GLM: %d.%d.%d", GLM_VERSION_MAJOR, GLM_VERSION_MINOR, GLM_VERSION_PATCH);
+    {
+        auto version = b2GetVersion();
+        SDL_Log("Box2c: %d.%d.%d", version.major, version.minor, version.revision);
+    }
     SDL_Log("Application started successfully!");
     return app->status();
 }
@@ -67,7 +69,7 @@ int SDL_AppInit(void** appstate, int argc, char* argv[]) {
 int SDL_AppEvent(void* appstate, const SDL_Event* event) {
     auto* app = reinterpret_cast<App*>(appstate);
     app->event(event);
-    return 0;
+    return SDL_APP_CONTINUE;
 }
 
 int SDL_AppIterate(void* appstate) {
