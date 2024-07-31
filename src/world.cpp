@@ -550,7 +550,7 @@ class PlayerComponent : public Component {
 
         if (!walking) {
             const float T = 0.1f;
-            float x = 0.0;
+            float x = 0.0f;
             if (velocity.x < -T) {
                 x = 10;
             } else if (velocity.x > T) {
