@@ -266,7 +266,7 @@ class Sprite : public Component {
     void render(RenderContext& context) override {
         context.setTexture(m_textureRect.texture);
         Mat3 mat = Mat3(1.0f);
-        mat[0][0] = m_flipX ? 1 : -1;
+        mat[0][0] = m_flipX ? 1.0f : -1.0f;
         context.drawTexture(m_contentRect, m_textureRect.normalizedBounds(), mat);
     };
 
