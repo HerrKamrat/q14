@@ -7,7 +7,8 @@
 #include <tuple>
 #include <vector>
 
-#include "node.hpp"
+#include "context.hpp"
+#include "math.hpp"
 
 struct nk_context;
 
@@ -22,11 +23,21 @@ class Debugger {
 
     void log(const char* log);
 
+    bool pushSection(const char* name);
+    void popSection();
+    void texture(SDL_Texture* ptr);
+
+    bool active() const {
+        return m_windowShown;
+    };
+
+    bool value(const char* key, bool& value);
+
   private:
     std::unique_ptr<nk_context, void (*)(nk_context*)> m_ctx{nullptr, nullptr};
     std::vector<std::tuple<std::string, std::string>> m_values;
     std::vector<std::string> m_logs;
     bool m_windowShown = true;
     bool m_toggleWindow = false;
-    int m_windowHeight = 0;
+    Size m_windowSize{0, 0};
 };

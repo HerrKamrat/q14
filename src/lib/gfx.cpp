@@ -128,6 +128,16 @@ Vec2 RenderContext::transform(Vec2 v) {
     return m_transform * Vec3(v, 1.0);
 }
 
+void RenderContext::debug(Debugger& debugger) {
+    if (debugger.pushSection("RENDERER")) {
+        for (auto& texture : m_textures) {
+            debugger.texture(texture.ptr);
+        }
+
+        debugger.popSection();
+    };
+}
+
 void RenderContext::drawTexture(SDL_FRect* src,
                                 SDL_FRect* dst,
                                 float angleDegree,

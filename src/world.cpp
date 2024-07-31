@@ -42,13 +42,26 @@ class Component {
         return *m_gameObject;
     }
 
+    const GameObject& getGameObject() const {
+        return *m_gameObject;
+    }
+
     virtual void init(GameContext& context) {};
     virtual void deinit(GameContext& context) {};
     virtual void update(UpdateContext& context) {};
     virtual void render(RenderContext& context) {};
 
+    int getTag() const {
+        return m_tag;
+    }
+    void setTag(int tag) {
+        m_tag = tag;
+    }
+
   private:
+    // TODO: Replace ptr with id
     GameObject* m_gameObject = nullptr;
+    int m_tag = 0;
 };
 
 class GameObject {
@@ -62,6 +75,7 @@ class GameObject {
 
     void update(UpdateContext& context) {
         for (auto& component : m_components) {
+            component->setGameObject(this);
             component->update(context);
         }
     };
@@ -69,6 +83,7 @@ class GameObject {
     void render(RenderContext& context) {
         context.pushTransform(m_transform);
         for (auto& component : m_components) {
+            component->setGameObject(this);
             component->render(context);
         }
         context.popTransform();
@@ -95,6 +110,30 @@ class GameObject {
         m_components.push_back(std::move(component));
         return ptr;
     };
+
+    template <class T>
+    T* addComponent(std::unique_ptr<T> component, int tag) {
+        component->setTag(tag);
+        return addComponent(std::move(component));
+    };
+
+    Component* getComponentByTag(int tag) {
+        auto it = std::find_if(m_components.begin(), m_components.end(),
+                               [tag](const auto& c) { return c->getTag() == tag; });
+        if (it != m_components.end()) {
+            return it->get();
+        }
+        return nullptr;
+    }
+
+    const Component* getComponentByTag(int tag) const {
+        auto it = std::find_if(m_components.begin(), m_components.end(),
+                               [tag](const auto& c) { return c->getTag() == tag; });
+        if (it != m_components.end()) {
+            return it->get();
+        }
+        return nullptr;
+    }
 
     void remove() {
         m_removed = true;
@@ -170,16 +209,26 @@ class PhysicsBodyComponent : public Component {
         b2Body_ApplyLinearImpulseToCenter(m_id, {force.x, force.y}, true);
     }
 
-    Vec2 getLinearVelocity() {
+    Vec2 getLinearVelocity() const {
         b2Vec2 velocity = b2Body_GetLinearVelocity(m_id);
         return {velocity.x, velocity.y};
     }
 
-    float getMass() {
+    Vec2 getPosition() const {
+        auto position = b2Body_GetPosition(m_id);
+        return {position.x, position.y};
+    }
+
+    void setPosition(Vec2 position) {
+        auto angle = b2Body_GetAngle(m_id);
+        b2Body_SetTransform(m_id, {position.x, position.y}, angle);
+    }
+
+    float getMass() const {
         return b2Body_GetMass(m_id);
     }
 
-    float getFriction() {
+    float getFriction() const {
         return b2Shape_GetFriction(getShape());
     }
 
@@ -188,7 +237,7 @@ class PhysicsBodyComponent : public Component {
     }
 
   private:
-    b2ShapeId getShape() {
+    b2ShapeId getShape() const {
         b2ShapeId shapes = b2_nullShapeId;
         b2Body_GetShapes(m_id, &shapes, 1);
         return shapes;
@@ -217,13 +266,24 @@ class Sprite : public Component {
 
     void render(RenderContext& context) override {
         context.setTexture(m_textureRect.texture);
-        Rect rect{{-0.5f, -0.5f}, {1.0f, 1.0f}};
         Mat3 mat = Mat3(1.0f);
         mat[0][0] = m_flipX ? 1 : -1;
-        context.drawTexture(rect, m_textureRect.normalizedBounds(), mat);
+        context.drawTexture(m_contentRect, m_textureRect.normalizedBounds(), mat);
     };
 
+    void setSize(Size size) {
+        m_contentRect.size = size;
+    }
+    Size getSize() const {
+        return m_contentRect.size;
+    };
+
+    void setOrigin(Vec2 origin) {
+        m_contentRect.origin = origin;
+    }
+
   private:
+    Rect m_contentRect{{-0.5f, -0.5f}, {1.0f, 1.0f}};
     TextureRect m_textureRect;
     bool m_flipX = false;
 };
@@ -284,19 +344,21 @@ class PhysicsSystem {
         m_debugDraw.render(m_id, context);
     }
 
-    std::unique_ptr<PhysicsBodyComponent> createBody(Vec2 position = Vec2(0, 0),
-                                                     b2BodyType type = b2_dynamicBody) {
-        b2BodyDef bodyDef = b2DefaultBodyDef();
-        bodyDef.type = type;
-        bodyDef.fixedRotation = true;
-        bodyDef.position = {position.x, position.y};
-
+    std::unique_ptr<PhysicsBodyComponent> createBody(b2BodyDef bodyDef) {
         b2BodyId bodyId = b2CreateBody(m_id, &bodyDef);
 
         std::unique_ptr<PhysicsBodyComponent> component =
             std::make_unique<PhysicsBodyComponent>(bodyId);
         b2Body_SetUserData(bodyId, component.get());
         return component;
+    }
+
+    std::unique_ptr<PhysicsBodyComponent> createBody(Vec2 position = Vec2(0, 0),
+                                                     b2BodyType type = b2_dynamicBody) {
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.type = type;
+        bodyDef.position = {position.x, position.y};
+        return createBody(bodyDef);
     }
 
     std::span<b2BodyMoveEvent> getMoveEvents() {
@@ -339,18 +401,76 @@ class PhysicsSystem {
     Box2dDebugDraw m_debugDraw;
 };
 
+class BehaviourComponent : public Component {
+  public:
+    virtual bool moveLeft() const {
+        return false;
+    };
+    virtual bool moveRight() const {
+        return false;
+    };
+    virtual bool jump() const {
+        return false;
+    };
+};
+
+class PlayerBehaviourComponent : public BehaviourComponent {
+  public:
+    void update(UpdateContext& context) override {
+        m_state = context.getInputState();
+    }
+
+    bool moveLeft() const override {
+        return m_state.left.active();
+    };
+    bool moveRight() const override {
+        return m_state.right.active();
+    };
+    bool jump() const override {
+        return m_state.up.active();
+    };
+
+  private:
+    InputState m_state;
+};
+
+namespace Components {
+namespace Tags {
+constexpr int BEHAVIOUR = 10;
+constexpr int PHYSICS = 20;
+}  // namespace Tags
+}  // namespace Components
+class EnemyBehaviourComponent : public BehaviourComponent {
+  public:
+    bool moveLeft() const override {
+        return false;
+    };
+    bool moveRight() const override {
+        const PhysicsBodyComponent* body = static_cast<const PhysicsBodyComponent*>(
+            getGameObject().getComponentByTag(Components::Tags::PHYSICS));
+        return math::is_zero(body->getLinearVelocity().y);
+    };
+    bool jump() const override {
+        return false;  // math::random(0.0, 1.0) > 0.75;
+    };
+};
 class PlayerComponent : public Component {
   public:
-    PlayerComponent(PhysicsBodyComponent* physics, Sprite* sprite)
-        : m_physics(physics),
-          m_sprite(sprite){
-
-          };
-
     void init(GameContext& context) override {
+        m_behaviour = static_cast<BehaviourComponent*>(
+            getGameObject().getComponentByTag(Components::Tags::BEHAVIOUR));
+        if (!m_behaviour) {
+            m_behaviour = getGameObject().addComponent(std::make_unique<BehaviourComponent>());
+        }
         {
-            auto p = context.physics->createBody(getGameObject().getTransform().getPosition());
-            m_physics = getGameObject().addComponent(std::move(p));
+            const auto& p = getGameObject().getTransform().getPosition();
+            b2BodyDef bodyDef = b2DefaultBodyDef();
+            bodyDef.position = {p.x, p.y};
+            bodyDef.fixedRotation = true;
+            bodyDef.type = b2_dynamicBody;
+
+            m_physics = getGameObject().addComponent(context.physics->createBody(bodyDef),
+                                                     Components::Tags::PHYSICS);
         }
 
         {
@@ -406,14 +526,19 @@ class PlayerComponent : public Component {
         const float MAX_VELOCITY = 5.0f;
         const float VELOCITY_FORCE = 50.0f;
 
-        auto input = context.getInputState();
+        // auto input = context.getInputState();
 
         const auto velocity = body().getLinearVelocity();
 
-        bool walking = input.left.active() || input.right.active();
-        bool jump = input.up.active();
-        bool pushingLeftWall = onLeftWall() && input.left.active();
-        bool pushingRightWall = onRightWall() && input.right.active();
+        bool walking = behaviour().moveLeft() || behaviour().moveRight();
+        bool jump = behaviour().jump();
+        bool pushingLeftWall = onLeftWall() && behaviour().moveLeft();
+        bool pushingRightWall = onRightWall() && behaviour().moveRight();
+
+        // TODO: "delayed boolean"
+        // pushingRightWall = delayed(onRightWall() && moveRight(), 0.5s);
+        // if statement has been true for 0.5s or more, return true
+
         bool pushingWall = pushingLeftWall || pushingRightWall;
 
         float friction = body().getFriction();
@@ -442,11 +567,11 @@ class PlayerComponent : public Component {
                 // force *= 0.5f;
             }
             // b2Shape_SetFriction(m_shapeId, walking ? 0 : 1);
-            if (input.left.active() && velocity.x > -MAX_VELOCITY) {
+            if (behaviour().moveLeft() && velocity.x > -MAX_VELOCITY) {
                 // SDL_Log("left: %f", velocity.x);
                 body().applyForce({-force, 0.0f});
             }
-            if (input.right.active() && velocity.x < MAX_VELOCITY) {
+            if (behaviour().moveRight() && velocity.x < MAX_VELOCITY) {
                 // SDL_Log("right: %f", velocity.x);
                 body().applyForce({force, 0.0f});
                 // b2Body_ApplyLinearImpulseToCenter(m_bodyId, {1, 0}, true);
@@ -482,10 +607,12 @@ class PlayerComponent : public Component {
             SDL_Log("Jump end");
         }
 
-        if (input.left.active()) {
-            m_sprite->setFlipX(true);
-        } else if (input.right.active()) {
-            m_sprite->setFlipX(!true);
+        if (m_sprite) {
+            if (behaviour().moveLeft()) {
+                m_sprite->setFlipX(true);
+            } else if (behaviour().moveRight()) {
+                m_sprite->setFlipX(!true);
+            }
         }
     };
 
@@ -497,8 +624,13 @@ class PlayerComponent : public Component {
         return *m_physics;
     }
 
-    PhysicsBodyComponent* m_physics;
-    Sprite* m_sprite;
+    const BehaviourComponent& behaviour() const {
+        return *m_behaviour;
+    }
+
+    PhysicsBodyComponent* m_physics = nullptr;
+    BehaviourComponent* m_behaviour = nullptr;
+    Sprite* m_sprite = nullptr;
 
     bool isJumping = false;
     int jumpTicks = 0;
@@ -509,6 +641,7 @@ GameWorld::GameWorld() = default;
 
 GameWorld::~GameWorld() = default;
 
+Texture tex9;
 void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext) {
     m_physics = std::make_unique<PhysicsSystem>();
     m_physics->init();
@@ -516,25 +649,44 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
     auto img6 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0000);
     auto tex6 = renderContext.createTexture(img6.info, img6.pixels);
 
-    auto img7 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0006);
+    auto img9 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0022);
+    tex9 = renderContext.createTexture(img9.info, img9.pixels);
+
+    auto img7 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0006);
     auto tex7 = renderContext.createTexture(img7.info, img7.pixels);
+
+    auto img2 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0001);
+    auto tex2 = renderContext.createTexture(img2.info, img2.pixels);
+
+    auto img3 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0002);
+    auto tex3 = renderContext.createTexture(img3.info, img3.pixels);
+
+    auto img4 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0003);
+    auto tex4 = renderContext.createTexture(img4.info, img4.pixels);
+
+    auto iv0 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0020);
+    auto tv0 = renderContext.createTexture(iv0.info, iv0.pixels);
+
+    auto iv1 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0120);
+    auto tv1 = renderContext.createTexture(iv1.info, iv1.pixels);
+
+    auto iv2 = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0140);
+    auto tv2 = renderContext.createTexture(iv2.info, iv2.pixels);
+
+    auto ic = ResourceLoader::loadImage(Resources::Images::Tiles::Tile_0010);
+    auto tc = renderContext.createTexture(ic.info, ic.pixels);
 
     for (int i = 0; i < 1; i++) {
         auto& obj = m_gameObjects.emplace_back();
-        // auto physics = m_physics->create();
-        auto sprite = Sprite::create(tex6);
-        auto input = std::make_unique<PlayerComponent>(nullptr, sprite.get());
-
-        // obj.addComponent(std::move(physics));
-        obj.addComponent(std::move(input));
-        obj.addComponent(std::move(sprite));
+        obj.addComponent(std::make_unique<PlayerBehaviourComponent>(), Components::Tags::BEHAVIOUR);
+        obj.addComponent(Sprite::create(tex6));
+        obj.addComponent(std::make_unique<PlayerComponent>());
 
         obj.getTransform().setPosition({8, 14});
     }
-    auto createPlatform = [=](Rect rect) {
+
+    auto createHorizontalPlatform = [=](Rect rect) {
         auto& obj = m_gameObjects.emplace_back();
-        auto sprite = Sprite::create(tex6);
-        auto input = std::make_unique<PlayerComponent>(nullptr, sprite.get());
 
         b2Polygon polygon = b2MakeBox(rect.width() / 2, rect.height() / 2);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -542,12 +694,97 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
         obj.addComponent(m_physics->createBody(rect.center(), b2_staticBody))
             ->addShape(shapeDef, polygon);
 
+        Size size{rect.size.y, rect.size.y};
+        Vec2 origin = -rect.size / 2.0f;
+        {
+            // Left
+            auto sprite = Sprite::create(tex2);
+            sprite->setSize(size);
+            sprite->setOrigin(origin);
+            obj.addComponent(std::move(sprite));
+        }
+        for (int i = 2; i < rect.size.x; i++) {
+            // Mid
+            origin.x += 1;
+            auto sprite = Sprite::create(tex3);
+            sprite->setSize(size);
+            sprite->setOrigin(origin);
+            obj.addComponent(std::move(sprite));
+        }
+        {
+            // Right
+            origin.x += 1;
+            auto sprite = Sprite::create(tex4);
+            sprite->setSize(size);
+            sprite->setOrigin(origin);
+            obj.addComponent(std::move(sprite));
+        }
         obj.getTransform().setPosition(rect.center());
     };
 
-    createPlatform({{0, 15}, {16, 1}});
-    createPlatform({{0, 12}, {8, 1}});
-    createPlatform({{0, 9}, {4, 1}});
+    auto createVerticalPlatform = [=](Rect rect) {
+        auto& obj = m_gameObjects.emplace_back();
+
+        b2Polygon polygon = b2MakeBox(rect.width() / 2, rect.height() / 2);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+        obj.addComponent(m_physics->createBody(rect.center(), b2_staticBody))
+            ->addShape(shapeDef, polygon);
+
+        Size size{rect.size.x, rect.size.x};
+        Vec2 origin = -rect.size / 2.0f;
+        {
+            // Top
+            auto sprite = Sprite::create(tv0);
+            sprite->setSize(size);
+            sprite->setOrigin(origin);
+            obj.addComponent(std::move(sprite));
+        }
+        for (int i = 2; i < rect.size.y; i++) {
+            // Mid
+            origin.y += 1;
+            auto sprite = Sprite::create(tv1);
+            sprite->setSize(size);
+            sprite->setOrigin(origin);
+            obj.addComponent(std::move(sprite));
+        }
+        {
+            // Bottom
+            origin.y += 1;
+            auto sprite = Sprite::create(tv2);
+            sprite->setSize(size);
+            sprite->setOrigin(origin);
+            obj.addComponent(std::move(sprite));
+        }
+        obj.getTransform().setPosition(rect.center());
+    };
+
+    auto createCrate = [=](Vec2 position) {
+        Rect rect{position, {1, 1}};
+        auto& obj = m_gameObjects.emplace_back();
+        auto sprite = Sprite::create(tc);
+
+        b2Polygon polygon = b2MakeBox(rect.width() / 2, rect.height() / 2);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+        obj.addComponent(m_physics->createBody(rect.center(), b2_dynamicBody),
+                         Components::Tags::PHYSICS)
+            ->addShape(shapeDef, polygon);
+        obj.addComponent(std::move(sprite));
+    };
+
+    createHorizontalPlatform({{0, 15}, {13, 1}});
+    createHorizontalPlatform({{0, 12}, {8, 1}});
+    createHorizontalPlatform({{0, 9}, {4, 1}});
+
+    createVerticalPlatform({{0, 0}, {1, 16}});
+    createVerticalPlatform({{15, 0}, {1, 16}});
+    int s = 2;
+    for (int i = 0; i < s; i++) {
+        for (int j = 0; j < s - i; j++) {
+            createCrate({8 + i * 0.5f + j, 8 - i});
+        }
+    }
     GameContext gc = getContext();
     for (auto& obj : m_gameObjects) {
         obj.init(gc);
@@ -564,12 +801,46 @@ void GameWorld::resize(Size size) {
     m_cameraTransform.setPosition(offset);
 }
 
+float i = 2.0f;
 void GameWorld::update(UpdateContext& context) {
     GameContext gc = getContext();
     m_physics->update(context);
 
     for (auto& obj : m_gameObjects) {
         obj.update(context);
+        // if (obj.getTransform().getPosition().y < 0) {
+        auto cmp =
+            static_cast<PhysicsBodyComponent*>(obj.getComponentByTag(Components::Tags::PHYSICS));
+        if (cmp) {
+            auto p = cmp->getPosition();
+            if (p.y > 16) {
+                p.y -= 16;
+                // p.x = 8;
+                cmp->setPosition(p);
+            }
+        }
+        //}
+    }
+
+    {
+        if (context.getTime() > i && m_gameObjects.size() < 15) {
+            SDL_Log("Tick");
+            i += 2;
+            // createEnemy();
+
+            auto& obj = m_gameObjects.emplace_back();
+            // auto physics = m_physics->create();
+            auto input = std::make_unique<PlayerComponent>();
+
+            // obj.addComponent(std::move(physics));
+            obj.addComponent(std::make_unique<EnemyBehaviourComponent>(),
+                             Components::Tags::BEHAVIOUR);
+            obj.addComponent(std::move(input));
+            obj.addComponent(Sprite::create(tex9));
+
+            obj.getTransform().setPosition({2, 0});
+            obj.init(gc);
+        }
     }
 
     {
@@ -596,10 +867,19 @@ void GameWorld::render(RenderContext& context) {
     }
 
     context.setColor({255, 255, 255, 32});
-    m_physics->render(context);
+    if (m_debugPhysics) {
+        m_physics->render(context);
+    }
     context.popTransform();
 }
 
 GameContext GameWorld::getContext() {
     return {m_physics.get()};
+};
+
+void GameWorld::debug(Debugger& debug) {
+    if (debug.pushSection("WORLD")) {
+        debug.value("debug physics", m_debugPhysics);
+        debug.popSection();
+    }
 };

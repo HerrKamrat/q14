@@ -25,6 +25,7 @@ class GameWorld : public World {
     bool isAnimating() const override {
         return true;
     }
+    void debug(Debugger& debug) override;
 
     GameContext getContext();
 
@@ -33,4 +34,6 @@ class GameWorld : public World {
     // TODO: replace with Camera-object
     Transform m_cameraTransform;
     std::vector<GameObject> m_gameObjects;
+
+    bool m_debugPhysics = false;
 };

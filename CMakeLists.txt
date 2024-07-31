@@ -49,7 +49,7 @@ if(MSVC)
   # TODO: test this
   # target_compile_options(${EXECUTABLE_NAME} PRIVATE /W4)
 else()
-  target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-function)
+  target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable)
 endif()
 
 

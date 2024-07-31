@@ -5,7 +5,7 @@
 #include "debugger.hpp"
 #include "gfx.hpp"
 #include "input.hpp"
-#include "node.hpp"
+#include "world.hpp"
 
 struct AppConfig {
     const char* name{nullptr};

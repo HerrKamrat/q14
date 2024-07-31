@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "color.hpp"
+#include "debugger.hpp"
 #include "math.hpp"
 
 enum class PixelFormat { RGBA };
@@ -112,6 +113,8 @@ class RenderContext {
     SDL_Texture* getTexture() {
         return m_currentTexture.ptr;
     }
+
+    void debug(Debugger& debugger);
 
   private:
     Vec2 transform(Vec2 v);

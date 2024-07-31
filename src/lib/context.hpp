@@ -15,9 +15,14 @@ class UpdateContext {
         return m_ticks;
     }
 
-    float getDeltaTime() {
+    float getDeltaTime() const {
         return m_ticksDelta / 1000.0f;
     }
+
+        float getTime() const {
+        return m_ticks / 1000.0f;
+    }
+
 
     void setInputState(InputState inputState) {
         m_inputState = inputState;

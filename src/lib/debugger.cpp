@@ -131,7 +131,14 @@ void Debugger::event(const SDL_Event* event) {
     if (event->type == SDL_EVENT_KEY_UP && event->key.keysym.scancode == SDL_SCANCODE_F1) {
         m_toggleWindow = true;
     } else if (event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-        m_windowHeight = event->window.data2;
+        auto w = event->window.data1;
+        auto h = event->window.data2;
+        auto s = ROW_HEIGHT * 30;
+        if (w > h) {
+            m_windowSize = {glm::min(s, w), h};
+        } else {
+            m_windowSize = {w, glm::min(s, h)};
+        }
     }
 
     nk_sdl_handle_event(event);
@@ -147,9 +154,8 @@ void Debugger::preUpdate() {
     }
 
     m_windowShown =
-        m_windowShown &&
-        nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, 300, static_cast<float>(m_windowHeight)),
-                 NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE);
+        m_windowShown && nk_begin(ctx, WINDOW_NAME, nk_rect(0, 0, m_windowSize.x, m_windowSize.y),
+                                  NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE);
 }
 
 void Debugger::postUpdate(const UpdateContext& context) {
@@ -221,4 +227,31 @@ void Debugger::log(const char* log) {
         m_logs.erase(m_logs.begin());
     }
     m_logs.push_back(log);
+}
+
+bool Debugger::pushSection(const char* name) {
+    auto ctx = m_ctx.get();
+    return !!nk_tree_push(ctx, NK_TREE_TAB, name, NK_MINIMIZED);
+}
+
+void Debugger::popSection() {
+    auto ctx = m_ctx.get();
+    nk_tree_pop(ctx);
+}
+
+void Debugger::texture(SDL_Texture* ptr) {
+    auto ctx = m_ctx.get();
+
+    nk_layout_row_dynamic(ctx, ROW_HEIGHT * 10 * 1.2, 1);
+    nk_image(ctx, nk_image_ptr(ptr));
+}
+
+bool Debugger::value(const char* key, bool& value) {
+    auto ctx = m_ctx.get();
+    nk_layout_row_dynamic(ctx, ROW_HEIGHT, 2);
+    nk_label(ctx, key, NK_TEXT_LEFT);
+    nk_bool active = value;
+    nk_checkbox_label(ctx, key, &active);
+    value = active;
+    return value;
 }

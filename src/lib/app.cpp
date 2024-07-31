@@ -4,13 +4,14 @@
 
 class NullWorld : public World {
   public:
-    virtual void init(UpdateContext& updateContext, RenderContext& renderContext) override {};
-    virtual void update(UpdateContext& context) override {};
-    virtual void render(RenderContext& context) override {};
-    virtual bool isAnimating() const override {
+    void init(UpdateContext& updateContext, RenderContext& renderContext) override {};
+    void update(UpdateContext& context) override {};
+    void render(RenderContext& context) override {};
+    bool isAnimating() const override {
         return false;
     }
-    virtual void resize(Size size) override {};
+    void resize(Size size) override {};
+    void debug(Debugger& debug) override {};
 };
 
 App::App() : m_renderContext(nullptr), m_world(std::make_unique<NullWorld>()) {
@@ -158,6 +159,10 @@ void App::update() {
     }
 
     m_updateContext.setTicks(lastTicks + iterations * updateTicks);
+    if (m_debugger.active()) {
+        m_world->debug(m_debugger);
+        m_renderContext.debug(m_debugger);
+    }
     m_debugger.postUpdate(m_updateContext);
 }
 

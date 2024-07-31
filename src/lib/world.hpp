@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "context.hpp"
 #include "event.hpp"
 #include "gfx.hpp"
 #include "input.hpp"
@@ -19,6 +20,7 @@ class World {
     virtual void render(RenderContext& context) = 0;
     virtual bool isAnimating() const = 0;
     virtual void resize(Size size) = 0;
+    virtual void debug(Debugger& debug) = 0;
 };
 
 class Node : public EventListener {
