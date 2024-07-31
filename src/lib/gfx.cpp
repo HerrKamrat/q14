@@ -172,7 +172,10 @@ void RenderContext::drawPoint(Vec2 point, float size) {
 }
 
 void RenderContext::drawLine(Vec2 p0, Vec2 p1) {
-    SDL_RenderLine(m_renderer, p0.x, p0.y, p1.x, p1.y);
+    Vec2 tp0 = transform(p0);
+    Vec2 tp1 = transform(p1);
+
+    SDL_RenderLine(m_renderer, tp0.x, tp0.y, tp1.x, tp1.y);
 }
 
 void RenderContext::drawPolygon(int vertexCount,

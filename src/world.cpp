@@ -10,6 +10,12 @@
 class GameObject;
 class Component;
 
+namespace Components {
+namespace Tags {
+constexpr int BEHAVIOUR = 10;
+constexpr int PHYSICS = 20;
+}  // namespace Tags
+}  // namespace Components
 template <>
 struct std::equal_to<b2ShapeId> {
     constexpr bool operator()(const b2ShapeId& lhs, const b2ShapeId& rhs) const {
@@ -47,7 +53,7 @@ class Component {
 
     virtual void init(GameContext& context) {};
     virtual void deinit(GameContext& context) {};
-    virtual void update(UpdateContext& context) {};
+    virtual void update(GameContext& context, UpdateContext& updateContext) {};
     virtual void render(RenderContext& context) {};
 
     int getTag() const {
@@ -72,10 +78,10 @@ class GameObject {
     GameObject& operator=(const GameObject& other) = delete;
     GameObject& operator=(GameObject&& other) = default;
 
-    void update(UpdateContext& context) {
+    void update(GameContext& context, UpdateContext& updateContext) {
         for (auto& component : m_components) {
             component->setGameObject(this);
-            component->update(context);
+            component->update(context, updateContext);
         }
     };
 
@@ -152,6 +158,9 @@ class GameObject {
     Transform m_transform;
 };
 class PhysicsBodyComponent : public Component {
+  public:
+    using Callback = std::function<void(PhysicsBodyComponent&, PhysicsBodyComponent&)>;
+
   private:
     struct Sensor {
         int collisions = 0;
@@ -171,11 +180,32 @@ class PhysicsBodyComponent : public Component {
         return shapeId;
     }
 
-    void onCollisionBegan(b2ShapeId id) {
+    b2ShapeId addShape(b2ShapeDef shapeDef, b2Circle circle) {
+        auto shapeId = b2CreateCircleShape(m_id, &shapeDef, &circle);
+        if (shapeDef.isSensor) {
+            m_sensors.emplace(shapeId, Sensor{});
+        }
+        b2Shape_SetUserData(shapeId, this);
+        return shapeId;
+    }
+
+    void onCollisionBegan(PhysicsBodyComponent& other) {
+        if (m_collisionBegan) {
+            m_collisionBegan(*this, other);
+        }
+    };
+
+    void onCollisionEnded(PhysicsBodyComponent& other) {
+        if (m_collisionEnded) {
+            m_collisionEnded(*this, other);
+        }
+    };
+
+    void onSensorCollisionBegan(b2ShapeId id) {
         getSensor(id).collisions++;
     };
 
-    void onCollisionEnded(b2ShapeId id) {
+    void onSensorCollisionEnded(b2ShapeId id) {
         getSensor(id).collisions--;
     };
 
@@ -186,6 +216,9 @@ class PhysicsBodyComponent : public Component {
     bool isSensorInCollision(b2ShapeId id) const {
         auto it = m_sensors.find(id);
         return it != m_sensors.end() && it->second.collisions > 0;
+    }
+    void init(GameContext& context) override {
+        onMove(getPosition(), 0);
     }
 
     void deinit(GameContext& context) override {
@@ -235,6 +268,10 @@ class PhysicsBodyComponent : public Component {
         b2Shape_SetFriction(getShape(), f);
     }
 
+    void setCollisionListener(Callback&& callback) {
+        m_collisionBegan = callback;
+    }
+
   private:
     b2ShapeId getShape() const {
         b2ShapeId shapes = b2_nullShapeId;
@@ -244,6 +281,10 @@ class PhysicsBodyComponent : public Component {
 
     b2BodyId m_id;
     std::unordered_map<b2ShapeId, Sensor> m_sensors;
+
+  public:
+    Callback m_collisionBegan = {};
+    Callback m_collisionEnded = {};
 };
 
 class Sprite : public Component {
@@ -287,6 +328,51 @@ class Sprite : public Component {
     bool m_flipX = false;
 };
 
+class TrailRendererComponent : public Component {
+  public:
+    // static std::unique_ptr<Sprite> create(Texture texture) {
+    //     auto sprite = std::make_unique<Sprite>();
+    //     TextureRect rect{texture, {{0, 0}, {texture.width, texture.height}}};
+    //     sprite->setTextureRect(rect);
+    //     return sprite;
+    // }
+
+    void init(GameContext& context) override {
+        m_previousPosition = getGameObject().getTransform().getPosition();
+    }
+
+    void update(GameContext& context, UpdateContext& updateContext) override {
+        auto p = getGameObject().getTransform().getPosition();
+        m_delta = m_previousPosition - p;
+        m_previousPosition = p;
+    };
+
+    void render(RenderContext& context) override {
+        context.drawLine(m_delta, {0.0f, 0.0f});
+        context.drawPoint({0.0f, 0.0f}, 10.0f);
+        // context.setTexture(m_textureRect.texture);
+        // Mat3 mat = Mat3(1.0f);
+        // mat[0][0] = m_flipX ? 1.0f : -1.0f;
+        // context.drawTexture(m_contentRect, m_textureRect.normalizedBounds(), mat);
+    };
+
+    void setSize(Size size) {
+        m_contentRect.size = size;
+    }
+    Size getSize() const {
+        return m_contentRect.size;
+    };
+
+    void setOrigin(Vec2 origin) {
+        m_contentRect.origin = origin;
+    }
+
+  private:
+    Rect m_contentRect{{-0.5f, -0.5f}, {1.0f, 1.0f}};
+    Vec2 m_delta;
+    Vec2 m_previousPosition;
+};
+
 class PhysicsSystem {
   public:
     bool valid() const {
@@ -315,7 +401,7 @@ class PhysicsSystem {
 
             auto sensor = reinterpret_cast<PhysicsBodyComponent*>(userData);
             // auto visitor = reinterpret_cast<GameObject*>(visitorUserData);
-            sensor->onCollisionBegan(event.sensorShapeId);
+            sensor->onSensorCollisionBegan(event.sensorShapeId);
         };
 
         for (auto& event : getSensorEndTouchEvents()) {
@@ -326,7 +412,7 @@ class PhysicsSystem {
             // auto visitorUserData = b2Body_GetUserData(b2Shape_GetBody(event.visitorShapeId));
             auto* sensor = reinterpret_cast<PhysicsBodyComponent*>(userData);
             // auto visitor = reinterpret_cast<GameObject*>(visitorUserData);
-            sensor->onCollisionEnded(event.sensorShapeId);
+            sensor->onSensorCollisionEnded(event.sensorShapeId);
         };
 
         for (auto& event : getMoveEvents()) {
@@ -336,6 +422,28 @@ class PhysicsSystem {
                 float r = b2Rot_GetAngle(event.transform.q);
                 body->onMove(p, r);
             }
+        }
+
+        for (auto& event : getBeginTouchEvents()) {
+            auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
+            auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
+
+            auto bodyA = reinterpret_cast<PhysicsBodyComponent*>(userDataA);
+            auto bodyB = reinterpret_cast<PhysicsBodyComponent*>(userDataB);
+
+            bodyA->onCollisionBegan(*bodyB);
+            bodyB->onCollisionBegan(*bodyA);
+        }
+
+        for (auto& event : getEndTouchEvents()) {
+            auto userDataA = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdA));
+            auto userDataB = b2Body_GetUserData(b2Shape_GetBody(event.shapeIdB));
+
+            auto bodyA = reinterpret_cast<PhysicsBodyComponent*>(userDataA);
+            auto bodyB = reinterpret_cast<PhysicsBodyComponent*>(userDataB);
+
+            bodyA->onCollisionEnded(*bodyB);
+            bodyB->onCollisionEnded(*bodyA);
         }
     };
 
@@ -411,12 +519,15 @@ class BehaviourComponent : public Component {
     virtual bool jump() const {
         return false;
     };
+    virtual bool primaryAction() const {
+        return false;
+    }
 };
 
 class PlayerBehaviourComponent : public BehaviourComponent {
   public:
-    void update(UpdateContext& context) override {
-        m_state = context.getInputState();
+    void update(GameContext& context, UpdateContext& updateContext) override {
+        m_state = updateContext.getInputState();
     }
 
     bool moveLeft() const override {
@@ -426,19 +537,32 @@ class PlayerBehaviourComponent : public BehaviourComponent {
         return m_state.right.active();
     };
     bool jump() const override {
-        return m_state.up.active();
+        return m_state.up.active() || m_state.secondaryAction.active();
+    };
+    bool primaryAction() const override {
+        return m_state.primaryAction.active();
     };
 
   private:
     InputState m_state;
 };
 
-namespace Components {
-namespace Tags {
-constexpr int BEHAVIOUR = 10;
-constexpr int PHYSICS = 20;
-}  // namespace Tags
-}  // namespace Components
+class BulletComponent : public Component {
+  public:
+    void init(GameContext& context) override {
+        auto& obj = getGameObject();
+        auto pc =
+            static_cast<PhysicsBodyComponent*>(obj.getComponentByTag(Components::Tags::PHYSICS));
+        pc->setCollisionListener([](PhysicsBodyComponent& self, PhysicsBodyComponent& other) {
+            // TODO: TEMP
+            self.getGameObject().remove();
+            if (other.getGameObject().getComponentByTag(Components::Tags::BEHAVIOUR)) {
+                other.getGameObject().remove();
+            }
+        });
+    }
+};
+
 class EnemyBehaviourComponent : public BehaviourComponent {
   public:
     bool moveLeft() const override {
@@ -453,6 +577,8 @@ class EnemyBehaviourComponent : public BehaviourComponent {
         return false;  // math::random(0.0, 1.0) > 0.75;
     };
 };
+
+// TODO: rename
 class PlayerComponent : public Component {
   public:
     void init(GameContext& context) override {
@@ -521,7 +647,7 @@ class PlayerComponent : public Component {
         return onLeftWall() || onRightWall();
     }
 
-    void update(UpdateContext& context) override {
+    void update(GameContext& context, UpdateContext& updateContext) override {
         const float MAX_VELOCITY = 5.0f;
         const float VELOCITY_FORCE = 50.0f;
 
@@ -606,6 +732,33 @@ class PlayerComponent : public Component {
             SDL_Log("Jump end");
         }
 
+        if (behaviour().primaryAction()) {
+            auto& obj = context.createObject();
+            {
+                const auto& p = getGameObject().getTransform().getPosition();
+                b2BodyDef bodyDef = b2DefaultBodyDef();
+                bodyDef.position = {p.x + 1.0f, p.y};
+                bodyDef.fixedRotation = true;
+                bodyDef.type = b2_dynamicBody;
+                bodyDef.isBullet = true;
+                bodyDef.gravityScale = 0.01f;
+                b2Circle circle{{0.0f, 0.0f}, 0.01f};
+
+                b2ShapeDef shapeDef = b2DefaultShapeDef();
+                shapeDef.density = 1.0f;
+                shapeDef.friction = 0.0f;
+                shapeDef.restitution = 0.0f;
+
+                auto pc = obj.addComponent(context.physics->createBody(bodyDef),
+                                           Components::Tags::PHYSICS);
+                pc->addShape(shapeDef, circle);
+                pc->applyForce({1.0f, 0.0f});
+
+                obj.addComponent(std::make_unique<BulletComponent>());
+                obj.addComponent(std::make_unique<TrailRendererComponent>());
+            }
+        }
+
         if (m_sprite) {
             if (behaviour().moveLeft()) {
                 m_sprite->setFlipX(true);
@@ -644,6 +797,8 @@ Texture tex9;
 void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext) {
     m_physics = std::make_unique<PhysicsSystem>();
     m_physics->init();
+    // TODO: temp
+    m_gameObjects.reserve(126);
 
     auto img6 = ResourceLoader::loadImage(Resources::Images::Characters::Tile_0000);
     auto tex6 = renderContext.createTexture(img6.info, img6.pixels);
@@ -805,8 +960,10 @@ void GameWorld::update(UpdateContext& context) {
     GameContext gc = getContext();
     m_physics->update(context);
 
-    for (auto& obj : m_gameObjects) {
-        obj.update(context);
+    int count = m_gameObjects.size();
+    for (int i = 0; i < count; i++) {
+        auto& obj = m_gameObjects[i];
+        obj.update(gc, context);
         // if (obj.getTransform().getPosition().y < 0) {
         auto cmp =
             static_cast<PhysicsBodyComponent*>(obj.getComponentByTag(Components::Tags::PHYSICS));
@@ -814,11 +971,17 @@ void GameWorld::update(UpdateContext& context) {
             auto p = cmp->getPosition();
             if (p.y > 16) {
                 p.y -= 16;
+                p.x = 2;
                 // p.x = 8;
                 cmp->setPosition(p);
             }
         }
         //}
+    }
+
+    for (int i = count; i < (int)m_gameObjects.size(); i++) {
+        auto& obj = m_gameObjects[i];
+        obj.init(gc);
     }
 
     {
@@ -873,7 +1036,7 @@ void GameWorld::render(RenderContext& context) {
 }
 
 GameContext GameWorld::getContext() {
-    return {m_physics.get()};
+    return {&m_gameObjects, m_physics.get()};
 };
 
 void GameWorld::debug(Debugger& debug) {
@@ -882,3 +1045,7 @@ void GameWorld::debug(Debugger& debug) {
         debug.popSection();
     }
 };
+
+GameObject& GameContext::createObject() {
+    return gameObjects->emplace_back();
+}

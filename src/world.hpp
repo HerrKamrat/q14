@@ -10,7 +10,11 @@ class PhysicsSystem;
 class GameObject;
 
 struct GameContext {
+    // TODO: TEMP...
+    std::vector<GameObject>* gameObjects;
     PhysicsSystem* physics;
+
+    GameObject& createObject();
 };
 
 class GameWorld : public World {
