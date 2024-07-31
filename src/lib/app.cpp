@@ -149,7 +149,7 @@ void App::update() {
     auto lastTicks = m_updateContext.getTicks();
     auto delta = currentTicks - lastTicks;
     // TODO: fix this for real
-    int iterations = delta / updateTicks;
+    int iterations = static_cast<int>(delta / updateTicks);
 
     for (int i = std::min(iterations, maxIterations); i > 0; i--) {
         lastTicks = lastTicks + updateTicks;

@@ -684,7 +684,7 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
         obj.getTransform().setPosition({8, 14});
     }
 
-    auto createHorizontalPlatform = [=](Rect rect) {
+    auto createHorizontalPlatform = [=, this](Rect rect) {
         auto& obj = m_gameObjects.emplace_back();
 
         b2Polygon polygon = b2MakeBox(rect.width() / 2, rect.height() / 2);
@@ -721,7 +721,7 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
         obj.getTransform().setPosition(rect.center());
     };
 
-    auto createVerticalPlatform = [=](Rect rect) {
+    auto createVerticalPlatform = [=, this](Rect rect) {
         auto& obj = m_gameObjects.emplace_back();
 
         b2Polygon polygon = b2MakeBox(rect.width() / 2, rect.height() / 2);
@@ -758,7 +758,7 @@ void GameWorld::init(UpdateContext& updateContext, RenderContext& renderContext)
         obj.getTransform().setPosition(rect.center());
     };
 
-    auto createCrate = [=](Vec2 position) {
+    auto createCrate = [=, this](Vec2 position) {
         Rect rect{position, {1, 1}};
         auto& obj = m_gameObjects.emplace_back();
         auto sprite = Sprite::create(tc);
